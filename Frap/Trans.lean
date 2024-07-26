@@ -586,11 +586,11 @@ example : btrans_sound fold_constants_bexp := by
 
 example : btrans_sound fold_constants_bexp := by
   intro b st; induction b <;> simp [fold_constants_bexp] <;>
-  first
-  | rename_i a1 a2  -- cases for arithmetic comparisons
+  first -- tactic 'first' will try the first tactic we provided and if it fails, it will try the next one below the first one
+  | rename_i a1 a2  -- cases for arithmetic comparisons (first one)
     rw [fold_constants_aexp_sound a1, fold_constants_aexp_sound a2]
     split' <;> (try split) <;> simp [*]
-  | split' <;> simp [*]
+  | split' <;> simp [*] -- (second one)
 
 /-
 Finally, here's the proof for commands:
