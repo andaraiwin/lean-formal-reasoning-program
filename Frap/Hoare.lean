@@ -108,13 +108,16 @@ macro_rules
 
 #check {* fun _ => True *} <{x := 0}> {* fun _ => True *}
 
+#print True
+
 /-
 exercise (1-star)
 Prove that if `Q` holds in every state, then any triple with `Q` as its postcondition is valid.
 -/
 
 theorem hoare_post_true P Q c : (∀ st, Q st) → {* P *} c {* Q *} := by
-  sorry
+  intro hp st st' hPre hEval
+  apply hp
 
 /-
 exercise (1-star)
@@ -122,6 +125,8 @@ Prove that if `P` holds in no state, then any triple with `P` as its preconditio
 -/
 
 theorem hoare_pre_false P Q c : (∀ st, ¬ P st) → {* P *} c {* Q *} := by
+  intro hp st st' hPre hEval
+  -- cases hEval
   sorry
 
 /-
