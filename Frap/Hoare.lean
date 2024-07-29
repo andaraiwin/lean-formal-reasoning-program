@@ -31,12 +31,6 @@ example : ¬ cequiv loop c_skip := by
   constructor
 
 namespace Hoare
--- open AExp
--- open BExp
--- open Com
--- open CEval
--- attribute [local simp]
---   aeval beval aequiv bequiv cequiv
 
 /-
 # Hoare logic
@@ -59,7 +53,7 @@ abbrev Assertion := State → Prop
 
 /-
 For example,
-* `fun st => st x = 3` hols for states `st` in which value of `x` is 3
+* `fun st => st x = 3` holds for states `st` in which value of `x` is 3
 * `fun st => True` holds for all states
 * `fun st => False` holds for no states
 
@@ -86,8 +80,7 @@ meaning:
 * and if `c` eventually terminates in some final state,
 * then that final state will satisfy the assertion `Q`.
 
-This is a _partial correctness_ statement: the program is correct if it
-terminates normally (i.e., no run-time error, no infinite loop or divergence).
+This is a _partial correctness_ statement: the program is correct if it terminates normally (i.e., no run-time error, no infinite loop or divergence).
 
 Assertion `P` is called the _precondition_ of the triple, and `Q` is the _postcondition_.
 
@@ -106,7 +99,21 @@ syntax:30 "{*" term "*}" term "{*" term "*}" : term
 macro_rules
   | `(term|{*$p*} $c {*$q*}) => `(valid_hoare_triple $p $c $q)
 
+-- { True } x := 0 { True }
 #check {* fun _ => True *} <{x := 0}> {* fun _ => True *}
+
+#print True
+
+example :
+    {* fun _ => True *}
+      <{x := 0}>
+    {* fun _ => True *} := by
+  -- unfold valid_hoare_triple
+  intro st st' hPre _
+  assumption
+
+example : True := by
+  constructor
 
 #print True
 
@@ -143,9 +150,9 @@ Since `skip` doesn't change the state, it preserves any assertion `P`.
 -/
 
 theorem hoare_skip P : {* P *} <{skip}> {* P *} := by
-  intro st st' hp he
-  cases he
-  assumption
+  intro st st' hPre hEval
+  cases hEval
+  exact hPre
 
 /-
 ### Sequencing
@@ -158,14 +165,14 @@ This matches the natural flow of information in many of the situations where we'
 
 theorem hoare_seq P Q R c₁ c₂ :
     {* Q *} c₂ {* R *} → {* P *} c₁ {* Q *} → {* P *} c_seq c₁ c₂ {* R *} := by
-  intro hc₂ hc₁ st st' hp he
-  cases he
-  rename_i he₁ he₂
+  intro hc₂ hc₁ st st' hPre hEval
+  cases hEval
+  rename_i hE₁ hE₂
   apply hc₂
   . apply hc₁
-    . exact hp
-    . exact he₁
-  . exact he₂
+    . exact hPre
+    . exact hE₁
+  . exact hE₂
 
 /-
 ### Assignment
@@ -230,22 +237,22 @@ Here are some valid instances of the assignment rule:
 -/
 
 macro s:term "[" name:term "↦" val:term "]" : term =>
-  `(insert' $s $name $val)
+  `(update $s $name $val)
 
 theorem hoare_asgn Q x a :
     {* fun st => Q (st[x ↦ aeval st a]) *} c_asgn x a {* Q *} := by
-  intro st st' hp he
-  cases he
+  intro st st' hPre hEval
+  cases hEval
   simp [*] at *
-  assumption
+  exact hPre
 
 example :
     -- { (x < 5)[x ↦ x+1]}
-    {* fun st => (fun st' => lookup' st' x < 5) (st[x ↦ aeval st <{x + 1}>]) *}
+    {* fun st => (fun st' => st' x < 5) (st[x ↦ aeval st <{x + 1}>]) *}
       <{x := x + 1}>
     -- { x < 5 }
-    {* fun st => lookup' st x < 5 *} := by
-  apply hoare_asgn (fun st => lookup' st x < 5)
+    {* fun st => st x < 5 *} := by
+  apply hoare_asgn (fun st => st x < 5)
 
 /-
 Complete these Hoare triples by providing an appropriate precondition using ∃, then prove then with `apply hoare_asgn`.
@@ -260,7 +267,7 @@ example : ∃ P,
     {* P *}
       <{ x := 2 * x }>
     -- { x ≤ 10 }
-    {* fun st => lookup' st x <= 10 *} := by
+    {* fun st => st x <= 10 *} := by
   sorry
 
 /-
@@ -271,7 +278,7 @@ example : ∃ P,
     {* P *}
       <{ x := 3 }>
     -- { 0 ≤ x ∧ x ≤ 5 }
-    {* fun st => 0 <= lookup' st x ∧ lookup' st x <= 5 *} := by
+    {* fun st => 0 <= st x ∧ st x <= 5 *} := by
   sorry
 
 /-
@@ -279,9 +286,9 @@ By using a _parameter_ `m` (a Lean number) to remember the original value of `x`
 -/
 
 theorem hoare_asgn_fwd m a (P : Assertion) :
-    {* fun st => P st ∧ lookup' st x = m *}
+    {* fun st => P st ∧ st x = m *}
       c_asgn x a
-    {* fun st => P (st[x ↦ m]) ∧ lookup' st x = aeval (st[x ↦ m]) a *} := by
+    {* fun st' => P (st'[x ↦ m]) ∧ st' x = aeval (st'[x ↦ m]) a *} := by
   intro st st' hPre hEval
   cases hEval
   cases hPre
@@ -290,7 +297,7 @@ theorem hoare_asgn_fwd m a (P : Assertion) :
   . -- need a lemma that `x = m → st = st[x ↦ m]`
     -- and a lemma that `(st[x ↦ n])[x ↦ m] = st[x ↦ m]`
     sorry
-  . simp [map_lookup_insert_eq]
+  . simp [update, lookup_update_eq]
     sorry
 
 /-
@@ -300,9 +307,9 @@ Prove that it is correct.
 -/
 
 theorem hoare_asgn_fwd_exists a (P : Assertion) :
-    {* fun st => P st *}
+    {* P *}
       c_asgn x a
-    {* fun st => ∃ m, P (st[x ↦ m]) ∧ lookup' st x = aeval (st[x ↦ m]) a *} := by
+    {* fun st' => ∃ m, P (st'[x ↦ m]) ∧ st' x = aeval (st'[x ↦ m]) a *} := by
   sorry
 
 /-
@@ -311,9 +318,9 @@ theorem hoare_asgn_fwd_exists a (P : Assertion) :
 Sometimes the preconditions and postconditions we get from the Hoare rules won't quite be the ones we want in the particular situation at hand -- they may be logically equivalent but have a different syntactic form that fails to unify with the goal we are trying to prove, or they actually may be logically weaker (for preconditions) or stronger (for postconditions) than what we need.
 
 For instance,
-  {(X = 3) [X ↦ 3]} X := 3 {X = 3},
+  `{(X = 3) [X ↦ 3]} X := 3 {X = 3}`,
 follows directly from the assignment rule, but
-  {True} X := 3 {X = 3}
+  `{True} X := 3 {X = 3}`
 does not.
 This triple is valid, but it is not an instance of `hoare_asgn` because `True` and `(X = 3) [X ↦ 3]` are not syntactically equal assertions.
 
@@ -353,11 +360,11 @@ example :
     {* fun _ => True *}
       <{ x := 1 }>
     -- { x = 1 }
-    {* fun st => lookup' st x = 1 *} := by
+    {* fun st => st x = 1 *} := by
   apply hoare_consequence_pre
   . apply hoare_asgn
   . intro st _
-    simp [map_lookup_insert_eq]
+    simp [lookup_update_eq]
 
 /-
 Finally, here is a combined rule of consequence that allows us to vary both the precondition and the postcondition.
@@ -426,7 +433,7 @@ example :
     {* fun _ => True *}
       <{if x = 0 then y := 2 else y := x + 1 end}>
     -- { x ≤ y }
-    {* fun st => lookup' st x <= lookup' st y *} := by
+    {* fun st => st x <= st y *} := by
   sorry
 
 /-
@@ -438,7 +445,7 @@ example :
     {* fun _ => True *}
       <{if x <= y then z := y - x else y := x + z end}>
     -- { y = x + z }
-    {* fun st => lookup' st y = lookup' st x + lookup' st z *} := by
+    {* fun st => st y = st x + st z *} := by
   sorry
 
 /-
