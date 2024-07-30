@@ -33,6 +33,7 @@ example : ∃ (a : AExp), ¬ (
   -- simp [*] at *
   -- unfold valid_hoare_triple at h
   -- apply hoare_asgn (fun st => st x = aeval st a)
+  -- apply hoare_consequence_pre
   sorry
 
 
