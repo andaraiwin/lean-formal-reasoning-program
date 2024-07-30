@@ -104,19 +104,6 @@ macro_rules
 
 #print True
 
-example :
-    {* fun _ => True *}
-      <{x := 0}>
-    {* fun _ => True *} := by
-  -- unfold valid_hoare_triple
-  intro st st' hPre _
-  assumption
-
-example : True := by
-  constructor
-
-#print True
-
 /-
 exercise (1-star)
 Prove that if `Q` holds in every state, then any triple with `Q` as its postcondition is valid.
@@ -254,6 +241,24 @@ example :
     {* fun st => st x < 5 *} := by
   apply hoare_asgn (fun st => st x < 5)
 
+
+example :
+    -- { (x < 10)[x ↦ x+1]}
+    {* fun st => (fun st' => st' x < 10) (st[x ↦ aeval st <{x + 1}>]) *}
+      <{x := x + 1}>
+    -- { x < 10 }
+    {* fun st => st x < 10 *} := by
+  apply hoare_asgn (fun st => st x < 10)
+
+example : ∃ P,
+    {* P *}
+      <{ x := x + 1}>
+    -- { x < 10 }
+    {* fun st => st x < 10 *} := by
+    exists (fun st => (fun st' => st' x < 10) (st[x ↦ aeval st <{x + 1}>]))
+    apply hoare_asgn (fun st => st x < 10)
+
+
 /-
 Complete these Hoare triples by providing an appropriate precondition using ∃, then prove then with `apply hoare_asgn`.
 If you find that tactic doesn't suffice, double check that you have completed the triple properly.
@@ -268,6 +273,10 @@ example : ∃ P,
       <{ x := 2 * x }>
     -- { x ≤ 10 }
     {* fun st => st x <= 10 *} := by
+  -- { (x ≤ 5)[x ↦ 2 * x] }
+  exists (fun st => (fun st' => st' x <= 5) (st[x ↦ aeval st <{x * 2}>]))
+  -- apply hoare_asgn (fun st => st x <= 5)
+  -- apply hoare_asgn (fun st => st x <= 10)
   sorry
 
 /-
@@ -310,6 +319,7 @@ theorem hoare_asgn_fwd_exists a (P : Assertion) :
     {* P *}
       c_asgn x a
     {* fun st' => ∃ m, P (st'[x ↦ m]) ∧ st' x = aeval (st'[x ↦ m]) a *} := by
+
   sorry
 
 /-

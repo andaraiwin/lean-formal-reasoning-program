@@ -27,7 +27,16 @@ example : ∃ (a : AExp), ¬ (
     {* fun _ => True *}
       <{ x := <[a]> }>
     {* fun st => st x = aeval st a *}) := by
+  let a := <{ x + 1 }>
+  exists a
+  -- intro h
+  -- simp [*] at *
+  -- unfold valid_hoare_triple at h
+  -- apply hoare_asgn (fun st => st x = aeval st a)
   sorry
+
+
+-- Ans : a = x + 1 is a counterexample showing that the rule is incorrect.
 
 /-
 Define `swap` program as follows.
@@ -49,7 +58,19 @@ theorem swap_correct a₀ b₀ :
     {* fun st => st x = a₀ ∧ st y = b₀ *}
       swap_program
     {* fun st => st x = b₀ ∧ st y = a₀ *} := by
-  sorry
+  unfold swap_program
+  apply hoare_seq (fun st => st x = a₀ ∧ st y = b₀)
+  apply hoare_asgn
+  apply hoare_seq (fun st => st x = a₀ ∧ st y = b₀)
+  apply hoare_asgn
+  apply hoare_consequence_pre
+  apply hoare_asgn
+  intros st h
+  simp [update]
+  cases h; rename_i h₁ h₂
+  constructor
+  . apply h₂
+  . apply h₁
 
 /-
 exercise (3-star)
@@ -60,4 +81,13 @@ example :
     {* fun st => st x ≤ st y *}
       swap_program
     {* fun st => st y ≤ st x *} := by
-  sorry
+  unfold swap_program
+  apply hoare_seq (fun st => st x ≤ st y)
+  apply hoare_asgn
+  apply hoare_seq (fun st => st x ≤ st y)
+  apply hoare_asgn
+  apply hoare_consequence_pre
+  apply hoare_asgn
+  intros st h
+  simp [update]
+  apply h
