@@ -300,7 +300,35 @@ theorem swap_if_branches b c₁ c₂
     : cequiv
         <{if <[b]> then <[c₁]> else <[c₂]> end}>
         <{if !<[b]> then <[c₂]> else <[c₁]> end}> := by
-  sorry
+  unfold cequiv
+  intro st st'
+  constructor
+  . intro h
+    cases h
+    case e_ifTrue =>
+      apply e_ifFalse
+      . simp
+        assumption
+      . assumption
+    case e_ifFalse =>
+      apply e_ifTrue
+      . simp
+        assumption
+      . assumption
+  . intro h
+    cases h
+    case e_ifTrue =>
+      apply e_ifFalse
+      rename_i bt h'
+      . simp at bt
+        assumption
+      . assumption
+    case e_ifFalse =>
+      apply e_ifTrue
+      rename_i bf h'
+      . simp at bf
+        assumption
+      . assumption
 
 /-
 For `while` loops, we start with the easier theorem of the two.

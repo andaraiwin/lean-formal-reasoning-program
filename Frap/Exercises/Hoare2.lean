@@ -24,7 +24,17 @@ theorem if_minus_plus :
       <{if x <= y then z := y - x else y := x + z end}>
     -- { y = x + z }
     {* fun st => st y = st x + st z *} := by
-  sorry
+  apply hoare_if
+  . apply hoare_consequence_pre
+    . apply hoare_asgn
+    . simp
+      intro st h
+      omega
+  . apply hoare_consequence_pre
+    . apply hoare_asgn
+    . simp
+      intro st _
+      constructor
 
 /-
 exercise (2-star)
@@ -33,22 +43,28 @@ Fill in valid decorations for the following program:
 ```
   { True }
     if x <= y then
-                    { **FILL IN HERE** } ->>
-                    { **FILL IN HERE** }
+                    { True ∧ x ≤ y } ->>
+                    { y = x + (y - x) }
       z := y - x
-                    { **FILL IN HERE** }
+                    { y = x + z }
     else
-                    { **FILL IN HERE** } ->>
-                    { **FILL IN HERE** }
+                    { True ∧ ¬(x ≤ y) } ->>
+                    {(x + z) = x + z}
       y := x + z
-                    { **FILL IN HERE** }
+                    { y = x + z }
     end
   { y = x + z }
 ```
 
 Briefly justify each use of `->>`.
 
-**FILL IN HERE**
+From hoare_if: {P} if b then c1 else c2 {Q} we can get 2 more information,
+1.  Precondition for the if is {P ∧ b} or ({ True ∧ x ≤ y }) then we can perform c1 and the postcondition will be {Q} or {(y = x + z)}.
+    After that we subsitute z by y - x in the postcondition. Thus, we will get { y = x + (y - x) } for the hoare assignment part.
+
+2.  Likewise with the first one. Precondition is {P ∧ ¬b} or { True ∧ ¬(x ≤ y) } then we can perform c2 and the postcondition will also be {Q} or {(y = x + z)}.
+    Subsequently, we substitute y by x + z in the postcondition. Thus, we will get {(x + z) = x + z} for hoare assignment part.*
+
 -/
 
 /-
@@ -59,16 +75,19 @@ Replace all occurrences of `FILL IN HERE` with appropriate assertions and fill i
 def if_minus_plus_dec : Decorated := decorated
   (fun _ => True) $
     dc_if <{x <= y}>
-      (fun st => /-**FILL IN HERE**-/ True)
-      (dc_pre (fun st => /-**FILL IN HERE**-/ True) $
-    dc_asgn z <{y - x}>
-      (fun st => /-**FILL IN HERE**-/ True))
+      (fun st => True ∧ st x ≤ st y )
+      (dc_pre (fun st => st y = st x + (st y - st x) ) $
 
-      (fun st => /-**FILL IN HERE**-/ True)
-      (dc_pre (fun st => /-**FILL IN HERE**-/ True) $
+    dc_asgn z <{y - x}>
+      (fun st => st y = st x + st z))
+
+      (fun st => True ∧ ¬(st x ≤ st y))
+      (dc_pre (fun st => (st x + st z) =st  x + st z) $
+
     dc_asgn y <{x + z}>
-      (fun st => /-**FILL IN HERE**-/ True))
+      (fun st => st y = st x + st z))
+
   (fun st => st y = st x + st z)
 
 theorem if_minus_plus_correct : outer_triple_valid if_minus_plus_dec := by
-  sorry
+  verify

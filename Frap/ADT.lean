@@ -111,7 +111,7 @@ exercise (1-star)
 Prove that the empty tree is a BST.
 -/
 theorem empty_tree_BST (α : Type u) : BST (@empty_tree α) := by
-  sorry
+  constructor
 
 /-
 exercise (4-star)
@@ -126,11 +126,57 @@ Proceed by induction on the evidence that `t` is a BST.
 
 theorem forall_insert_of_forall {α : Type u} (P : Nat → α → Prop) (t : Tree α)
     : ForallTree P t → ∀ k v, P k v → ForallTree P (insert k v t) := by
-  sorry
+  intro hp k v pkv
+  induction t with
+  | empty =>
+    unfold insert
+    constructor <;> assumption
+  | tree l k' v' r ihl' ihr' =>
+    cases hp
+    unfold insert
+    split
+    . constructor
+      . assumption
+      . apply ihl'; assumption
+      . assumption
+    . split
+      . constructor
+        . assumption
+        . assumption
+        . apply ihr'; assumption
+      . constructor <;> assumption
 
 theorem bst_insert_of_bst {α : Type u} (k : Nat) (v : α) (t : Tree α)
     : BST t → BST (insert k v t) := by
-  sorry
+  intro hbst
+  induction hbst with
+  | empty => constructor <;> constructor
+  | tree l k' v' r hlt hgt hbstl hbstr =>
+    unfold insert
+    split
+    . constructor
+      . apply forall_insert_of_forall
+        . assumption
+        . assumption
+      . assumption
+      . assumption
+      . assumption
+    . split
+      . constructor
+        . assumption
+        . apply forall_insert_of_forall
+          . assumption
+          . assumption
+        . assumption
+        . assumption
+      . have heq : k = k' := by
+          simp [*] at *
+          apply Nat.le_antisymm <;> assumption
+        constructor
+        . rw [heq]; assumption
+        . rw [heq]; assumption
+        . assumption
+        . assumption
 
 /-
 ## Correctness of BST operations

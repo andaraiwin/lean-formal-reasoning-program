@@ -269,7 +269,13 @@ exercise (2-star)
 Prove that the sum of even numbers remains even.
 -/
 theorem ev_sum (n m : Nat) : Even n → Even m → Even (n + m) := by
-  sorry
+  intro h₁ h₂
+  induction h₂ with
+  | ev_zero => simp [*]
+  | ev_add_two n' h' ih =>
+      rw [← Nat.add_assoc]
+      apply ev_add_two
+      exact ih
 
 /-
 ## Inductive relations
@@ -323,7 +329,8 @@ exercise (1-star)
 Prove that `LEq` is reflexive.
 -/
 theorem LEq_reflexive : ∀n : Nat, LEq n n := by
-  sorry
+  intro n
+  apply LEq.le_n
 
 /-
 exercise (4-star)
@@ -331,7 +338,10 @@ Prove that `LEq` is transitive.
 Hint: We can do induction on a lot of things here.  Which one works?
 -/
 theorem LEq_transitive : ∀n m k : Nat, LEq n m → LEq m k → LEq n k := by
-  sorry
+  intro n m k hnm hmk
+  induction hmk with
+  | le_n => assumption
+  | le_S hmk' _ => apply le_S; assumption
 
 /-
 ## references
