@@ -10,37 +10,51 @@ If your proof gets stuck, your implementation of some operation might be incorre
 open List  -- use Lean 4's `List`
 
 def empty {α : Type u} : List α :=
-  sorry
+  []
 
 def is_empty (q : List α) : Bool :=
-  sorry
+  match q with
+  | [] => true
+  | _ :: _ => false
 
 def enqueue (q : List α) (x : α) : List α :=
-  sorry
+  match q with
+  | [] => [x]
+  | head :: tail => head :: enqueue tail x
 
 def peek (default : α) (q : List α) : α :=
-  sorry
+  match q with
+  | [] => default
+  | head :: _ => head
 
 def dequeue (q : List α) : List α :=
-  sorry
+  match q with
+  | [] => []
+  | _ :: tail => tail
 
 theorem is_empty_empty : is_empty (@empty α) := by
-  sorry
+  rfl
 
 theorem is_empty_nonempty (q : List α) (x : α)
     : is_empty (enqueue q x) = false := by
-  sorry
+  induction q with
+  | nil => rfl
+  | cons _ _ ih => simp [enqueue, is_empty, ih]
 
 theorem peek_empty (d : α) : peek d empty = d := by
-  sorry
+  rfl
 
-theorem peek_nonempty (d x : α) (q : List α)
+theorem peek_nonempty (d x : α) (q : List α)  --Hard
     : peek d (enqueue q x) = peek x q := by
-  sorry
+  induction q with
+  | nil => rfl
+  | cons head _ ih => simp [enqueue, peek, ih]
 
 theorem dequeue_empty : dequeue (@empty α) = empty := by
-  sorry
+  rfl
 
-theorem dequeue_nonempty (x : α) (q : List α)
+theorem dequeue_nonempty (x : α) (q : List α) --Hard
     : dequeue (enqueue q x) = if is_empty q then q else enqueue (dequeue q) x := by
-  sorry
+  induction q with
+  | nil => rfl
+  | cons head _ ih => simp [enqueue, dequeue, is_empty, ih]

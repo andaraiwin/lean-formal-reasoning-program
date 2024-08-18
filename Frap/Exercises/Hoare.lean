@@ -16,7 +16,7 @@ exercise (2-star)
 
 The assignment rule looks backward to almost everyone the first time they see it.
 If it still seems puzzling to you, it may help to think a little about alternative "forward" rules.
-Here is a seemingly natural one:
+Here is a seemingly natural one:S
   `{ True } x := a { x = a }`
 
 Give a counterexample showing that this rule is incorrect and use it to complete the proof below, showing that it is really a counterexample.
@@ -28,16 +28,18 @@ example : ∃ (a : AExp), ¬ (
       <{ x := <[a]> }>
     {* fun st => st x = aeval st a *}) := by
   let a := <{ x + 1 }>
+  unfold valid_hoare_triple
+  simp
   exists a
+  simp
   -- intro h
-  -- simp [*] at *
-  -- unfold valid_hoare_triple at h
-  -- apply hoare_asgn (fun st => st x = aeval st a)
-  -- apply hoare_consequence_pre
-
-  sorry
-
-
+  constructor
+  . unfold x
+    constructor
+    . sorry
+    . sorry
+  . -- AExp is not a State ;∧;
+    sorry
 -- Ans : a = x + 1 is a counterexample showing that the rule is incorrect.
 
 /-

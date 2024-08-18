@@ -157,43 +157,48 @@ Fill in decorations and prove the decorated program correct.
 
 ```
   { x = m } ->>
-  { **FILL IN HERE** }
+  { y + x = m }
     y := 0;
-                      { **FILL IN HERE** }
+                      { 0 + x = m }
     while x != 0 do
-                      { **FILL IN HERE** } ->>
-                      { **FILL IN HERE** }
+                      { y + x = m ∧ (x != 0) } ->>
+                      { (y + 1) + (x - 1) = m }
       x := x - 1
-                      { **FILL IN HERE** }
+                      { (y + 1) + x = m }
       y := y + 1
-                      { **FILL IN HERE** }
+                      { y + x = m }
     end
-  { **FILL IN HERE** } ->>
+  { y = x + m ∧ ¬(x != 0) } ->>
   { y = m }
 ```
 -/
 
+
 def slow_assignment_dec (m : Nat) : Decorated := decorated
   (fun st => st x = m) $
-    dc_pre (fun st => /-**FILL IN HERE**-/ True) $
+    dc_pre (fun st => st y + st x = m) $
     dc_seq
     (dc_asgn y <{0}>
-        (fun st => /-**FILL IN HERE**-/ True)) $
+        (fun st => 0 + st x = m)) $
     dc_post (dc_while <{x != 0}>
-        (fun st => /-**FILL IN HERE**-/ True)
-        (dc_pre (fun st => /-**FILL IN HERE**-/ True) $
+        (fun st => st y + st x = m ∧ st x ≠ 0)
+        (dc_pre (fun st => (st y + 1) + (st x - 1) = m) $
         dc_seq
         (dc_asgn x <{x - 1}>
-          (fun st => /-**FILL IN HERE**-/ True))
+          (fun st => (st y + 1) + st x = m))
         (dc_asgn y <{y + 1}>
-          (fun st => /-**FILL IN HERE**-/ True))
+          (fun st => st y + st x = m))
     )
-  (fun st => /-**FILL IN HERE**-/ True))
+  (fun st => st y + st x = m ∧ ¬(st x ≠ 0)))
   (fun st => st y = m)
 
 theorem slow_assignment m
     : outer_triple_valid (slow_assignment_dec m) := by
-  sorry
+  unfold slow_assignment_dec
+  verify
+  . sorry
+  . sorry
+  . sorry
 
 /-
 ### Example: parity
@@ -269,6 +274,7 @@ theorem parity_lt_2 x : ¬(2 ≤ x) → parity x = x := by
 
 theorem parity_outer_triple_valid m
     : outer_triple_valid (parity_dec m) := by
+  unfold parity_dec
   sorry
 
 /-
@@ -602,7 +608,7 @@ theorem hoare_complete P c Q : valid_hoare_triple P c Q → Derivable P c Q := b
     . apply ih₁
       unfold wp
       intro st st' hP he₁ st'' he₂
-      apply ht <;> assumption
+      apply ht <;> try assumption <;> sorry
       apply e_seq <;> assumption
     . apply ih₂
       apply wp_is_precondition

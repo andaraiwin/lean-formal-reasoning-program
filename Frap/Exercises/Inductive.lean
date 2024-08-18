@@ -31,28 +31,41 @@ theorem cons_append (a : α) (as bs : List α)
 Prove that appending nil to any list results in that list.
 -/
 theorem append_nil (as : List α) : append as nil = as := by
-  sorry
+  induction as with
+  | nil => rfl
+  | cons a as ih => rw [cons_append, ih]
 
 /-
 Prove that list append is associative.
 -/
 theorem append_assoc (as bs cs : List α)
         : append (append as bs) cs = append as (append bs cs) := by
-  sorry
+  induction as with
+  | nil => rfl
+  | cons a as ih => rw [cons_append, cons_append, cons_append, ih]
 
 /-
 Define a function that returns the length of a list.
 -/
 def length {α : Type u} (as : List α) : Nat :=
-  sorry
+  match as with
+  | nil => 0
+  | cons _ as => 1 + length as
 
 /-
 With your definition, prove that it interacts with `append` as expected.
 You may use facts from the `Nat` namespace.
 -/
+
+#check Nat
+
 theorem length_append (as bs : List α)
         : length (append as bs) = length as + length bs := by
-  sorry
+  induction as with
+  | nil => rw [nil_append, length, Nat.zero_add]
+  | cons a as ih =>
+        rw [cons_append, length, length, ih]
+        rw [Nat.add_assoc]
 
 end List
 end Hidden

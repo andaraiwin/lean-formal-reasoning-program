@@ -16,51 +16,61 @@ attribute [local simp]
 /-
 exercise (3-star): minimum
 
+Program
+x = a, y = b, z = 0
+while x != 0 && y != 0 do
+  x := x - 1
+  y := y - 1
+  z := z + 1
+
+
 Fill in decorations for the following program and prove them correct.
 ```
   { True } ->>
-  { **FILL IN HERE** }
+  { 0 + min a b = min a b}
     x := a;
-                                { **FILL IN HERE** }
+                                { 0 + min x b = min a b }
     y := b;
-                                { **FILL IN HERE** }
+                                { 0 + min x y = min a b }
     z := 0;
-                                { **FILL IN HERE** }
+                                { z + min x y = min a b }
     while x != 0 && y != 0 do
-                                { **FILL IN HERE** } ->>
-                                { **FILL IN HERE** }
+                                { z + min x y = min a b ∧ (x ≠ 0 && y ≠ 0) } ->>
+                                { (z + 1) + (min x-1 y-1) = min a b }
       x := x - 1
-                                { **FILL IN HERE** }
+                                { (z + 1) + (min x y-1) = min a b }
       y := y - 1
-                                { **FILL IN HERE** }
+                                { (z + 1) + min x y = min a b }
       z := z + 1
-                                { **FILL IN HERE** }
+                                { z + min x y = min a b }
     end
-  { **FILL IN HERE** } ->>
+  { z + min x y = min a b ∧ ¬(x ≠ 0 && y ≠ 0) } ->>
   { z = min a b }
 ```
 -/
 
+
 def minimum_dec (a b : Nat) : Decorated := decorated
   (fun _ => True) $
-    dc_pre (fun st => /-**FILL IN HERE**-/ True) $
+    dc_pre (fun st => 0 + min a b = min a b) $
     dc_seq (dc_asgn x (a_num a)
-      (fun st => /-**FILL IN HERE**-/ True)) $
+      (fun st => 0 + min (st x) b = min a b)) $
     dc_seq (dc_asgn y (a_num b)
-      (fun st => /-**FILL IN HERE**-/ True)) $
+      (fun st => 0 + min (st x) (st y) = min a b )) $
     dc_seq (dc_asgn z <{0}>
-      (fun st => /-**FILL IN HERE**-/ True)) $
+      (fun st => st z + min (st x) (st y) = min a b )) $
     dc_post (dc_while <{x != 0 && y != 0}>
-        (fun st => /-**FILL IN HERE**-/ True)
-        (dc_pre (fun st => /-**FILL IN HERE**-/ True) $
-      dc_seq (dc_asgn x <{x - 1}> (fun st => /-**FILL IN HERE**-/ True)) $
-      dc_seq (dc_asgn y <{y - 1}> (fun st => /-**FILL IN HERE**-/ True)) $
-      dc_asgn z <{z + 1}> (fun st => /-**FILL IN HERE**-/ True)
-      ) (fun st => /-**FILL IN HERE**-/ True))
+        (fun st => (st z) + (min (st x) (st y)) = min a b ∧ (st x ≠ 0 && st y ≠ 0) )
+        (dc_pre (fun st => (st z + 1) + (min (st x - 1) (st y - 1)) = min a b) $
+      dc_seq (dc_asgn x <{x - 1}> (fun st => (st z + 1) + (min (st x) (st y - 1)) = min a b)) $
+      dc_seq (dc_asgn y <{y - 1}> (fun st => (st z + 1) + (min (st x) (st y)) = min a b)) $
+      dc_asgn z <{z + 1}> (fun st => (st z) + (min (st x) (st y)) = min a b)
+      ) (fun st => st z + (min (st x) (st y)) = min a b ∧ ¬(st x ≠ 0 && st y ≠ 0)))
   (fun st => st z = min a b)
 
 theorem minimum_correct a b : outer_triple_valid (minimum_dec a b) := by
-  sorry
+  unfold minimum_dec
+  verify
 
 /-
 exercise (2-star)
@@ -69,4 +79,13 @@ Show that the precondition in the rule `hoare_asgn` is in fact the weakest preco
 
 theorem hoare_asgn_weakest Q x a
     : is_wp (fun st => Q (st[x ↦ aeval st a])) <{x := <[a]>}> Q := by
-  sorry
+  unfold is_wp; constructor
+  . apply hoare_consequence_pre
+    . apply hoare_asgn
+    . verify_assertion
+  . intro P' h st hP'
+    unfold valid_hoare_triple at h
+    apply h
+    . assumption
+    . constructor
+      rfl

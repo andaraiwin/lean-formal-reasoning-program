@@ -275,9 +275,13 @@ example : ∃ P,
     {* fun st => st x <= 10 *} := by
   -- { (x ≤ 5)[x ↦ 2 * x] }
   exists (fun st => (fun st' => st' x <= 5) (st[x ↦ aeval st <{x * 2}>]))
+  unfold valid_hoare_triple
+  intro st st' hPre hEval
+  cases hEval
+  simp [*, update] at *
+  omega
   -- apply hoare_asgn (fun st => st x <= 5)
   -- apply hoare_asgn (fun st => st x <= 10)
-  sorry
 
 /-
 exercise (2-star)
@@ -288,6 +292,7 @@ example : ∃ P,
       <{ x := 3 }>
     -- { 0 ≤ x ∧ x ≤ 5 }
     {* fun st => 0 <= st x ∧ st x <= 5 *} := by
+
   sorry
 
 /-
