@@ -125,7 +125,9 @@ example :
       (p
         (c 2)
         (c 4)) := by
-  sorry
+  apply st_plus2
+  apply st_plus2
+  apply st_plusConstConst
 
 end SimpleArith1
 
@@ -233,7 +235,26 @@ But to get maximum benefit from the exercise you should try to write your formal
 -/
 
 theorem step_deterministic : deterministic Step := by
-  sorry
+  unfold deterministic
+  intro x y₁ y₂ hy₁ hy₂
+  induction hy₁ generalizing y₂ with
+  | st_plusConstConst n₁ n₂ =>
+    cases hy₂ with
+    | st_plusConstConst => rfl
+    | st_plus1 => rename_i h; cases h
+    | st_plus2 => rename_i h; cases h
+  | st_plus1 t₁ t₁' t₂ h₁ ih =>
+    cases hy₂ with
+    | st_plusConstConst => cases h₁
+    | st_plus1 => congr; apply ih; assumption
+    | st_plus2 => rename_i h;
+
+                  sorry
+  | st_plus2 v₁ t₂ t₂' h₂ ih =>
+    cases hy₂ with
+    | st_plusConstConst => sorry
+    | st_plus1 => sorry
+    | st_plus2 => sorry
 
 /-
 ### Strong progress and normal forms

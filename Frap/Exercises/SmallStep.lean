@@ -33,7 +33,15 @@ open Value
 open Step
 
 example : ∃v, Value v ∧ ¬ normal_form Step v := by
-  sorry
+  unfold normal_form
+  exists (p (c 1) (c 1))
+  apply And.intro
+  . apply v_funny
+  . intro contra
+    apply contra
+    constructor
+    apply st_plusConstConst
+
 
 end Temp1
 
@@ -57,7 +65,14 @@ open Value
 open Step
 
 example : ∃v, Value v ∧ ¬ normal_form Step v := by
-  sorry
+  unfold normal_form
+  exists (c 0)
+  apply And.intro
+  . apply v_const
+  . intro contra
+    apply contra
+    constructor
+    apply st_funny
 
 end Temp2
 
@@ -82,6 +97,16 @@ open Value
 open Step
 
 example : ∃v, ¬ Value v ∧ normal_form Step v := by
-  sorry
+  unfold normal_form
+  exists (p (c 1) (p (c 2) (c 3)))
+  apply And.intro
+  . intro contra
+    cases contra
+  . intro contra
+    cases contra
+    rename_i h
+    cases h
+    rename_i h2
+    cases h2
 
 end Temp3

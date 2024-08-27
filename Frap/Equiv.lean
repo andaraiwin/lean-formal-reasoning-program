@@ -161,7 +161,16 @@ example : empty =[
       y := 1;
       z := 2
     ]=> (z !-> 2; y !-> 1; x !-> 0; empty) := by
-  sorry
+  constructor
+  . constructor
+    . constructor
+      simp
+      rfl
+    . constructor
+      simp
+      rfl
+  . constructor
+    simp
 
 /-
 ### Determinism of evaluation

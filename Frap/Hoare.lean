@@ -292,8 +292,8 @@ example : ∃ P,
       <{ x := 3 }>
     -- { 0 ≤ x ∧ x ≤ 5 }
     {* fun st => 0 <= st x ∧ st x <= 5 *} := by
-
-  sorry
+  exists (fun st => (fun st' => 0 <= st' x ∧ st' x <= 5) (st[x ↦ aeval st <{3}>]))
+  apply hoare_asgn (fun st => 0 <= st x ∧ st x <= 5)
 
 /-
 By using a _parameter_ `m` (a Lean number) to remember the original value of `x`, we can define a Hoare rule for assignment that does, intuitively, "work forwards" rather than backwards.
@@ -326,7 +326,8 @@ theorem hoare_asgn_fwd_exists a (P : Assertion) :
     {* P *}
       c_asgn x a
     {* fun st' => ∃ m, P (st'[x ↦ m]) ∧ st' x = aeval (st'[x ↦ m]) a *} := by
-
+  intro st st' hPre hEval
+  cases hEval
   sorry
 
 /-
