@@ -4,8 +4,8 @@ import Frap.Types
 
 namespace TM
 open Tm
--- open BValue
--- open NValue
+open BValue
+open NValue
 open Step
 open Ty
 open HasType
@@ -32,7 +32,53 @@ theorem progress'' t T
       obtain ⟨t₁', h₁⟩ := h
       exists (ite t₁' t₂ t₃)
       apply st_if; exact h₁
-  | _ => sorry
+  | t_true => left;unfold value; left; apply bv_true
+  | t_false => left; unfold value; left; apply bv_false
+  | t_0 => left; unfold value; right; apply nv_0
+  | t_succ t =>
+    rename_i ih
+    cases ih
+    . -- t is a value
+      left
+      have h : NValue t := by
+        apply nat_canonical <;> assumption
+      cases h
+      . unfold value; right; apply nv_succ; apply nv_0
+      . unfold value; right; apply nv_succ; apply nv_succ; assumption
+    . -- t can take a step
+      right
+      rename_i ih
+      obtain ⟨t', h⟩ := ih
+      exists (scc t')
+      apply st_succ; exact h
+  | t_pred t =>
+    rename_i ih
+    right; cases ih
+    . -- t is a value
+      have h : NValue t := by
+        apply nat_canonical <;> assumption
+      cases h
+      . exists zro; apply st_pred0
+      . constructor; apply st_predSucc; assumption
+    . -- t can take a step
+      rename_i h
+      obtain ⟨t', h⟩ := h
+      exists (prd t')
+      apply st_pred; exact h
+  | t_iszero t =>
+    rename_i ih
+    right; cases ih
+    . -- t is a value
+      have h : NValue t := by
+        apply nat_canonical <;> assumption
+      cases h
+      . exists tru; apply st_iszero0
+      . exists fls; apply st_iszeroSucc; assumption
+    . -- t can take a step
+      rename_i h
+      obtain ⟨t', h⟩ := h
+      exists (iszero t')
+      apply st_iszero; exact h
 
 /-
 exercise (2-star)
@@ -52,7 +98,33 @@ theorem preservation'' t t' T
     . -- st_if
       apply t_if <;> try assumption
       apply ih₁; assumption
-  | _ => sorry
+  | t_true => cases hE
+  | t_false => cases hE
+  | t_0 => cases hE
+  | t_succ t =>
+    rename_i ih
+    cases hE
+    apply t_succ
+    apply ih
+    assumption
+  | t_pred t =>
+    rename_i ih
+    cases hE
+    . apply t_0
+    . rename_i hT
+      cases hT
+      assumption
+    . apply t_pred
+      apply ih
+      assumption
+  | t_iszero t =>
+    rename_i ih
+    cases hE
+    . apply t_true
+    . apply t_false
+    . apply t_iszero
+      apply ih
+      assumption
 
 /-
 exercise (3-star)
@@ -64,4 +136,15 @@ If not, give a counterexample.
 theorem subject_expansion
     : (∀ t t' T, Step t t' ∧ HasType t' T → HasType t T)
       ∨ ¬ (∀ t t' T, Step t t' ∧ HasType t' T → HasType t T) := by
-  sorry
+  right
+  intros h
+  have hT : ¬ HasType (ite fls zro tru) bool := by -- counterexample
+    intro contra
+    cases contra
+    rename_i contra _
+    cases contra
+  apply hT
+  apply h
+  apply And.intro
+  . apply st_ifFalse
+  . apply t_true

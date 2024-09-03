@@ -158,7 +158,7 @@ inductive HasType : Tm → Ty → Prop :=
   | t_0 : HasType zro nat
   | t_succ t₁ : HasType t₁ nat → HasType (scc t₁) nat
   | t_pred t₁ : HasType t₁ nat → HasType (prd t₁) nat
-  | t_iszero t₁ : HasType t₁ nat → HasType (iszero t₁) nat
+  | t_iszero t₁ : HasType t₁ nat → HasType (iszero t₁) bool
 
 open HasType
 
@@ -186,7 +186,9 @@ example  -- `⊢ if false then zero else true ∈ bool`
 exercise (1-star)
 -/
 example t : HasType (scc t) nat → HasType t nat := by
-  sorry
+  intro ht
+  cases ht
+  assumption
 
 /-
 #### Canonical forms
@@ -256,7 +258,56 @@ theorem progress t T
       obtain ⟨t₁', h₁⟩ := h
       exists (ite t₁' t₂ t₃)
       apply st_if; exact h₁
-  | _ => sorry
+  | t_true =>
+    left;unfold value; left; apply bv_true
+  | t_false =>
+    left; unfold value; left; apply bv_false
+  | t_0 =>
+    left; unfold value; right; apply nv_0
+  | t_succ t =>
+    rename_i ih
+    cases ih
+    . -- t is a value
+      left
+      have h : NValue t := by
+        apply nat_canonical <;> assumption
+      cases h
+      . unfold value; right; apply nv_succ; apply nv_0
+      . unfold value; right; apply nv_succ; apply nv_succ; assumption
+    . -- t can take a step
+      right
+      rename_i ih
+      obtain ⟨t', h⟩ := ih
+      exists (scc t')
+      apply st_succ; exact h
+  | t_pred t =>
+    rename_i ih
+    right; cases ih
+    . -- t is a value
+      have h : NValue t := by
+        apply nat_canonical <;> assumption
+      cases h
+      . exists zro; apply st_pred0
+      . constructor; apply st_predSucc; assumption
+    . -- t can take a step
+      rename_i h
+      obtain ⟨t', h⟩ := h
+      exists (prd t')
+      apply st_pred; exact h
+  | t_iszero t =>
+    rename_i ih
+    right; cases ih
+    . -- t is a value
+      have h : NValue t := by
+        apply nat_canonical <;> assumption
+      cases h
+      . exists tru; apply st_iszero0
+      . exists fls; apply st_iszeroSucc; assumption
+    . -- t can take a step
+      rename_i h
+      obtain ⟨t', h⟩ := h
+      exists (iszero t')
+      apply st_iszero; exact h
 
 /-
 ### Type preservation
@@ -301,7 +352,33 @@ theorem preservation t t' T
     . -- st_if
       apply t_if <;> try assumption
       apply ih₁; assumption
-  | _ => sorry
+  | t_true => cases hE
+  | t_false => cases hE
+  | t_0 => cases hE
+  | t_succ t =>
+    rename_i ih
+    cases hE
+    apply t_succ
+    apply ih
+    assumption
+  | t_pred t =>
+    rename_i ih
+    cases hE
+    . apply t_0
+    . rename_i hT
+      cases hT
+      assumption
+    . apply t_pred
+      apply ih
+      assumption
+  | t_iszero t =>
+    rename_i ih
+    cases hE
+    . apply t_true
+    . apply t_false
+    . apply t_iszero
+      apply ih
+      assumption
 
 /-
 exercise (3-star)
@@ -312,7 +389,22 @@ The setup for this proof is similar, but not exactly the same.
 
 theorem preservation' t t' T
     : HasType t T → Step t t' → HasType t' T := by
-  sorry
+  intro hT hE
+  induction hE generalizing T with
+  | st_ifTrue =>
+    cases hT
+    assumption
+  | st_ifFalse =>
+    cases hT
+    assumption
+  | st_if =>
+    rename_i ih
+    cases hT
+    apply t_if
+    . apply ih; assumption
+    . assumption
+    . assumption
+  | _ => sorry
 
 /-
 The preservation theorem is often called _subject reduction_, because it tells us what happens when the "subject" of the typing relation is reduced.
