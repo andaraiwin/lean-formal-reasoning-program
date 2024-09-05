@@ -164,8 +164,8 @@ Permutation over lists is an equivalence relation.
 
 theorem permutation_refl (l : List α) : Permutation l l := by
   induction l with
-  | nil => constructor
-  | cons => constructor; assumption
+  | nil => apply perm_nil
+  | cons => apply perm_skip; assumption
 
 theorem permutation_symm (l l' : List α)
     : Permutation l l' → Permutation l' l := by
@@ -206,6 +206,12 @@ theorem permutation_app_head (l tl tl' : List α)
 theorem permutation_app (l m l' m' : List α)
     : Permutation l l' → Permutation m m'
       → Permutation (l++m) (l'++m') := by
+  -- intro h₁ h₂
+  -- induction h₁ with try simp
+  -- | perm_nil => apply h₂
+  -- | perm_skip => apply perm_skip; assumption
+  -- | perm_swap => sorry
+  -- | perm_trans => sorry
   sorry
 
 theorem permutation_add_inside a (l l' tl tl' : List α)
@@ -254,6 +260,7 @@ Hint: use `permutation_cons_inv` and `permutation_length_1_inv` given above.
 -/
 
 example : ¬ Permutation [1, 1] [1, 2] := by
+  intro h
   sorry
 
 /-
@@ -265,7 +272,7 @@ Now we can prove that `maybe_swap` is a permutation: it reorders elements but do
 theorem maybe_swap_perm al : Permutation al (maybe_swap al) := by
   unfold maybe_swap
   cases al with simp
-  | nil => constructor
+  | nil => apply perm_nil
   | cons a ar =>
     split
     . rename_i a' b' _ _
@@ -306,6 +313,7 @@ You will need to decide what to induct on: `al`, `bl`, `Permutation al bl`, and 
 
 theorem all_perm {α} (f : α → Bool) al bl
     : Permutation al bl → all al f → all bl f := by
+  intro hp hl
   sorry
 
 /-
@@ -456,6 +464,7 @@ Using `insert_sorted`, prove the insertion sort makes a list sorted.
 -/
 
 theorem sort_sorted l : Sorted (sort l) := by
+
   sorry
 
 /-
@@ -464,6 +473,7 @@ The following lema will be useful soon as a helper.
 -/
 
 theorem insert_perm x l : Permutation (x :: l) (insert x l) := by
+
   sorry
 
 /-
@@ -472,7 +482,11 @@ Prove that `sort` is a permutation, using `insert_perm`.
 -/
 
 theorem sort_perm l : Permutation l (sort l) := by
-  sorry
+  unfold sort
+  split
+  . apply perm_nil
+  .
+    sorry
 
 /-
 exercise (1-star)
@@ -480,7 +494,11 @@ Finish the proof of correctness!
 -/
 
 theorem insertion_sort_correct : is_a_sorting_algorithm sort := by
-  sorry
+  unfold is_a_sorting_algorithm
+  intro al
+  apply And.intro
+  . apply sort_perm
+  . apply sort_sorted
 
 /-
 ## Validating the specification (advanced)
@@ -500,7 +518,9 @@ This proof is a bit tricky, so you may have to think about how to approach it, a
 -/
 
 theorem sorted_sorted' al : Sorted al → sorted' al := by
-  sorry
+  intro S
+  induction S with try simp at *
+  | _ => sorry
 
 /-
 exercise (3-star)
