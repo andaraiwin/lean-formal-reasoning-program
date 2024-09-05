@@ -14,7 +14,7 @@ In this lecture, we introduce some techniques for reasoning about
 
 Later on, we'll apply these proof techniques to reasoning about algorithms and data structures.
 
-## The less-than order n the natural numbers
+## The less-than order on the natural numbers
 
 In our proofs about searching and sorting algorithms, we often have to reason about the less-than order on natural numbers.
 Recall that we write `x < y` for the proposition that `x` is less than `y`:
@@ -99,7 +99,7 @@ theorem maybe_swap_idempotent al
   rename_i a ar
   cases ar <;> try rfl
   rename_i b ar
-  simp [maybe_swap]
+  simp
   let h := Decidable.or_not_self (b < a)
   cases h
   . simp [*]; intro h'; omega
@@ -156,7 +156,7 @@ theorem permutation_nil_cons (l : List α) (x : α)
     apply ih₂
     apply Eq.symm
     apply permutation_nil
-    apply hp₁
+    exact hp₁
 
 /-
 Permutation over lists is an equivalence relation.
@@ -164,14 +164,14 @@ Permutation over lists is an equivalence relation.
 
 theorem permutation_refl (l : List α) : Permutation l l := by
   induction l with
-  | nil => apply perm_nil
-  | cons => apply perm_skip; assumption
+  | nil => exact perm_nil
+  | cons a al ih => apply perm_skip; exact ih
 
 theorem permutation_symm (l l' : List α)
     : Permutation l l' → Permutation l' l := by
   intro h
   induction h with
-  | perm_nil => apply perm_nil
+  | perm_nil => exact perm_nil
   | perm_skip => apply perm_skip; assumption
   | perm_swap => apply perm_swap
   | perm_trans => apply perm_trans <;> assumption
@@ -197,61 +197,167 @@ theorem permutation_app_tail (l l' tl : List α)
 theorem permutation_app_head (l tl tl' : List α)
     : Permutation tl tl' → Permutation (l++tl) (l++tl') := by
   intro h
-  induction l generalizing tl tl' with simp
-  | nil => assumption
-  | cons a al ih =>
-    apply perm_skip
-    apply ih; assumption
+  induction l with simp
+  | nil => exact h
+  | cons a al ih => apply perm_skip; exact ih
 
 theorem permutation_app (l m l' m' : List α)
     : Permutation l l' → Permutation m m'
       → Permutation (l++m) (l'++m') := by
-  -- intro h₁ h₂
-  -- induction h₁ with try simp
-  -- | perm_nil => apply h₂
-  -- | perm_skip => apply perm_skip; assumption
-  -- | perm_swap => sorry
-  -- | perm_trans => sorry
-  sorry
+  intro h₁ h₂
+  apply perm_trans
+  . apply permutation_app_tail; assumption
+  . apply permutation_app_head; assumption
 
 theorem permutation_add_inside a (l l' tl tl' : List α)
     : Permutation l l' → Permutation tl tl'
       → Permutation (l ++ a :: tl) (l' ++ a :: tl') := by
-  sorry
+  intro h₁ h₂
+  apply permutation_app
+  . assumption
+  . apply perm_skip; assumption
 
 theorem permutation_cons_append (l : List α) x
     : Permutation (x :: l) (l ++ [x]) := by
-  sorry
+  induction l with simp
+  | nil => apply permutation_refl
+  | cons =>
+    apply perm_trans
+    . apply perm_swap
+    . apply perm_skip; assumption
 
 theorem permutation_app_comm (l l' : List α)
     : Permutation (l ++ l') (l' ++ l) := by
-  sorry
+  induction l with simp
+  | nil => apply permutation_refl
+  | cons a al ih =>
+    -- a :: (al ++ l')
+    -- al ++ l' ++ [a]
+    -- l' ++ al ++ [a]
+    -- l' ++ (al ++ [a])
+    -- l' ++ a :: al
+    apply perm_trans
+    . apply permutation_cons_append
+    . apply perm_trans
+      . apply permutation_app_tail; exact ih
+      . rw [List.append_assoc]
+        apply permutation_app_head
+        apply permutation_symm
+        apply permutation_cons_append
 
 theorem permutation_app_rot (l₁ l₂ l₃ : List α)
     : Permutation (l₁ ++ l₂ ++ l₃) (l₂ ++ l₃ ++ l₁) := by
-  sorry
+  rw [List.append_assoc]
+  apply permutation_app_comm
 
 theorem permutation_app_swap_app (l₁ l₂ l₃ : List α)
     : Permutation (l₁ ++ l₂ ++ l₃) (l₂ ++ l₁ ++ l₃) := by
-  sorry
+  apply permutation_app_tail
+  apply permutation_app_comm
 
 theorem permutation_app_middle (l l₁ l₂ l₃ l₄ : List α)
     : Permutation (l₁ ++ l₂) (l₃ ++ l₄)
       → Permutation (l₁ ++ l ++ l₂) (l₃ ++ l ++ l₄) := by
-  sorry
+  intro h
+  -- l₁ ++ l ++ l₂
+  -- l ++ l₁ ++ l₂
+  -- l ++ (l₁ ++ l₂)
+  -- l ++ (l₃ ++ l₄)
+  -- l ++ l₃ ++ l₄
+  -- l₃ ++ l ++ l₄
+  apply perm_trans
+  . apply permutation_app_tail
+    apply permutation_app_comm
+  . rw [List.append_assoc]
+    apply perm_trans
+    . apply permutation_app_head; exact h
+    . rw [← List.append_assoc]
+      apply permutation_app_tail
+      apply permutation_app_comm
 
 theorem permutation_cons_app (l l₁ l₂ : List α)
     : Permutation l (l₁ ++ l₂)
       → Permutation (a :: l) (l₁ ++ a :: l₂) := by
-  sorry
+  intro h
+  -- a :: l
+  -- a :: (l₁ ++ l₂)
+  -- l₁ ++ l₂ ++ [a]
+  -- l₁ ++ (l₂ ++ [a])
+  -- l₁ ++ a :: l₂
+  apply perm_trans
+  . apply perm_skip; exact h
+  . apply perm_trans
+    . apply permutation_cons_append
+    . rw [List.append_assoc]
+      apply permutation_app_head
+      apply permutation_symm
+      apply permutation_cons_append
+
+theorem permutation_middle (l₁ l₂ : List α) a
+    : Permutation (a :: l₁ ++ l₂) (l₁ ++ a :: l₂) := by
+  apply permutation_cons_app
+  apply permutation_refl
+
+theorem permutation_middle2 (l₁ l₂ l₃ : List α) a b
+    : Permutation (a :: b :: l₁ ++ l₂ ++ l₃) (l₁ ++ a :: l₂ ++ b :: l₃) := by
+  simp
+  apply permutation_cons_app
+  -- b ++ (l₁ ++ (l₂ ++ l₃))
+  -- l₁ ++ b :: (l₂ ++ l₃)
+  -- l₁ ++ (l₂ ++ b :: l₃)
+  apply perm_trans
+  . apply permutation_cons_app
+    apply permutation_refl
+  . apply permutation_app_head
+    apply permutation_cons_app
+    apply permutation_refl
+
+theorem permutation_elt (l₁ l₂ l₁' l₂' : List α) a
+    : Permutation (l₁ ++ l₂) (l₁' ++ l₂')
+      → Permutation (l₁ ++ a :: l₂) (l₁' ++ a :: l₂') := by
+  -- l₁ ++ a :: l₂
+  -- a :: l₁ ++ l₂
+  -- a :: l₁' ++ l₂'
+  -- l₁' ++ a :: l₂'
+  intro h
+  apply perm_trans
+  . apply permutation_symm
+    apply permutation_cons_app
+    apply permutation_symm
+    exact h
+  . apply permutation_cons_app
+    apply permutation_refl
+
+theorem permutation_length (l l' : List α)
+    : Permutation l l' → List.length l = List.length l' := by
+  intro h
+  induction h with try simp
+  | perm_skip => assumption
+  | perm_trans => apply Eq.trans <;> assumption
+
+theorem permutation_nil_app_cons (l l' : List α) x
+  : ¬ Permutation [] (l++x::l') := by
+  intro contra
+  have contra' : @List.length α [] = List.length (l ++ x :: l') := by
+    apply permutation_length; exact contra
+  simp [*] at *
+  omega
 
 theorem permutation_cons_inv (l l' : List α) a
     : Permutation (a::l) (a::l') → Permutation l l' := by
+  -- the proof of this theorem requires another fact
+  -- which is currently out of the scope of this course
   sorry
 
 theorem permutation_length_1_inv a (l : List α)
     : Permutation [a] l → l = [a] := by
-  sorry
+  generalize heq₁ : [a] = l₁
+  intro h
+  induction h with (simp [*] at *)
+  | perm_skip x l₁ l₂ h₁ =>
+    obtain ⟨_, h'⟩ := heq₁
+    rw [← h']; rw [← h'] at h₁
+    apply permutation_nil; assumption
 
 /-
 exercise (2-star)
@@ -272,7 +378,7 @@ Now we can prove that `maybe_swap` is a permutation: it reorders elements but do
 theorem maybe_swap_perm al : Permutation al (maybe_swap al) := by
   unfold maybe_swap
   cases al with simp
-  | nil => apply perm_nil
+  | nil => exact perm_nil
   | cons a ar =>
     split
     . rename_i a' b' _ _
@@ -534,5 +640,7 @@ theorem sorted'_sorted al : sorted' al → Sorted al := by
 /-
 ## references
 * [Software Foundations, Volume 3 Verified Functional Algorithms: Basic Techniques for Comparisons and Permutations](https://softwarefoundations.cis.upenn.edu/vfa-current/Perm.html)
+* [The Coq Proof Assistant, Standard Library: List permutations as a composition of adjacent transpositions](https://coq.inria.fr/doc/V8.19.2/stdlib//Coq.Sorting.Permutation.html#Permutation)
+* [GitHub: coq/theories/Sorting/Permutation.v](https://github.com/coq/coq/blob/master/theories/Sorting/Permutation.v)
 * [Software Foundations, Volume 3 Verified Functional Algorithms: Insertion Sort](https://softwarefoundations.cis.upenn.edu/vfa-current/Sort.html)
 -/
