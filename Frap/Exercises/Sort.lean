@@ -10,7 +10,11 @@ exercise (2-star)
 Prove the following fact by using only constructors in the `Permutation` relation.
 -/
 example : Permutation [1, 2, 3] [2, 3, 1] := by
-  sorry
+  apply perm_trans
+  . apply perm_swap  -- [1, 2, 3] ~ [2, 1, 3]
+  . apply perm_skip  -- [1, 3] ~ [3, 1]
+    apply perm_swap  -- [2, 1, 3] ~ [2, 3, 1]
+
 
 /-
 exercise (3-star)
