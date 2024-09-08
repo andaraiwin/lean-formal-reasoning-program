@@ -248,7 +248,11 @@ Use `contents_perm` (even if you haven't proved it) and `perm_contents` to quick
 
 theorem same_contents_iff_perm al bl
     : contents al = contents bl ↔ Permutation al bl := by
-  sorry
+  constructor
+  . intro h₀
+    apply contents_perm; assumption
+  . intro h₀
+    apply perm_contents; assumption
 
 /-
 Therefore, the two specifications are equivalent.
@@ -256,7 +260,10 @@ Therefore, the two specifications are equivalent.
 
 theorem sort_specifications_equivalent sort
     : is_a_sorting_algorithm sort ↔ is_a_sorting_algorithm' sort := by
-  sorry
+  constructor
+  . intro h₀
+    sorry
+  . sorry
 
 /-
 # Selection sort
