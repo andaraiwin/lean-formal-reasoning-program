@@ -62,6 +62,7 @@ We begin the proof below by using Lean's tactic `funext`, which applies that axi
 
 theorem union_assoc a b c : union a (union b c) = union (union a b) c := by
   funext x
+  simp [*] at *
   sorry
 
 /-
@@ -70,6 +71,9 @@ Prove that multiset union is commutative.
 -/
 
 theorem union_comm a b : union a b = union b a := by
+  funext x
+  simp
+
   sorry
 
 /-
@@ -263,7 +267,11 @@ theorem sort_specifications_equivalent sort
   constructor
   . intro h₀
     sorry
-  . sorry
+  . intro h₀
+    unfold is_a_sorting_algorithm' at h₀
+    unfold is_a_sorting_algorithm
+    intro al
+    sorry
 
 /-
 # Selection sort
