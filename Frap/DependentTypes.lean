@@ -58,6 +58,11 @@ When an argument is enclosed in curly braces, it is _implicit_, meaning Lean wil
 For example, we can write `cons 25 nil`, for which Lean infers that `n = 0`.
 
 Thus, the term `Vec.cons 3 (Vec.cons 1 Vec.nil)` has type `Vec Nat 2`.
+-/
+
+#check Vec.cons 3 (Vec.cons 1 Vec.nil)
+
+/-
 By encoding the vector length in the type, we can provide more precise information above the result of functions.
 A function such as `Vec.reverse`, which reverses a vector, would map a value `Vec α n` to another value of the same type, with the same `n`.
 And `Vec.zip`, which pairs up elements from two lists into a list of pairs, could require its two arguments to have the same length.
@@ -70,7 +75,7 @@ The definitions below introduces conversions between lists and vectors:
 -/
 
 def listOfVec {α : Type} : ∀{n : Nat}, Vec α n → List α
-  | _, Vec.nil => []
+  | 0, Vec.nil => []
   | _, Vec.cons a v => a :: listOfVec v
 
 def vecOfList {α : Type} : ∀xs : List α, Vec α (List.length xs)
@@ -168,7 +173,29 @@ Let's try proving other properties between lists and vectors.
 
 theorem listOfVec_reverse α l
     : @listOfVec α (List.length l) (vecOfList l) = l := by
-  sorry
+  induction l with
+  | nil => rfl
+  | cons a xs ih =>
+    simp [vecOfList, listOfVec]
+    rw [ih]
+
+#check vecOfList (listOfVec (Vec.cons 2 (Vec.cons 3 Vec.nil)))
+#eval (listOfVec ( Vec.cons 3 Vec.nil )).length
+
+#check vecOfList (listOfVec (Vec.cons 3 Vec.nil))
+#eval (listOfVec ( Vec.cons 3 Vec.nil )).length = 1
+
+theorem length_vecOfList {α : Type} (xs : List α)
+    : List.length (listOfVec (vecOfList xs)) = List.length xs := by
+  induction xs with
+  | nil => rfl
+  | cons a xs ih => simp [vecOfList, listOfVec]; exact ih
+
+#check length_listOfVec 2 (Vec.cons 2 (Vec.cons 3 Vec.nil))
+
+-- theorem vecOfList_reverse α {n : Nat} (v : Vec α n)
+    -- : vecOfList (listOfVec v) = length_listOfVec (listOfVec v).length v ▸ v := by
+  -- sorry
 
 /-
 ## references
