@@ -127,7 +127,7 @@ Thus, in addition to the usual operations and quantifiers of predicate logic, we
 * `emp`  (empty heap)
   The heap is empty.
 * `e ↦ e'`  (singleton heap)
-  The heap contains one cell, at address `e` with contents `e'`.
+  The heap contains one cell, at address `e` with contents(value) `e'`.
 * `p₁ * p₂`  (separating conjunction, "star")
   The heap can be split into two disjoint parts such that `p₁` holds for one part and `p₂` holds for the other.
 * `p₁ -* p₂`  (separating implication, "magic wand")
