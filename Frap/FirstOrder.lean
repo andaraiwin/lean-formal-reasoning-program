@@ -303,20 +303,34 @@ Prove that a postcondition within a universal statement not mentioning the unive
 Conversely, if a predicate is satisfiable, a postcondition can be moved as a consequent of the predicate on any element of the domain.
 -/
 example : (∀ x, p x → r) ↔ (∃ x, p x) → r := by
-  sorry
+  constructor
+  . intro h
+    intro ⟨x, hp⟩
+    apply h
+    exact hp
+  . intro h
+    intro x
+    intro hp
+    apply h
+    exists x
 
 /-
 exercise (1-star)
 Prove that a postcondition within an existential statement not mentioning the existential variable can be pulled out of the existential, assuming that every element satisfies the predicate.
 -/
 example : (∃ x, p x → r) → (∀ x, p x) → r := by
-  sorry
+  intro h
+  obtain ⟨x, hr⟩ := h
+  intro h
+  apply hr
+  apply h
 
 /-
 exercise (1-star)
 Proe that a precondition within an existential statement not mentioning the existential variable can be pulled out of the existential.
 -/
 example : (∃ x, r → p x) → (r → ∃ x, p x) := by
+
   sorry
 
 end quantifiers
@@ -384,7 +398,10 @@ exercise (1-star)
 Prove the following substitution property.
 -/
 example (α β : Type) (a b : α) (f g : α → β) : a = b → f = g → f a = g b := by
-  sorry
+  intro h₁ h₂
+  apply h₁.subst
+  apply h₂.subst
+  rfl
 
 end equality
 

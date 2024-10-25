@@ -381,6 +381,7 @@ theorem plus_dist_into_with_r a b c : [] ⊩ (a & b) ⊕ c ⊸ (a ⊕ c) & (b �
   sorry
 
 theorem unit_lolli_ident_l a : [] ⊩ l_unit ⊸ a ≣ a := by
+
   sorry
 
 theorem lolli_top_top a : [] ⊩ a ⊸ l_top ≣ l_top := by

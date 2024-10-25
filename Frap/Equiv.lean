@@ -300,6 +300,19 @@ theorem if_true b c₁ c₂
     . simp [*]
     . assumption
 
+-- theorem if_false b c₁ c₂
+--   : bequiv b <{false}> → cequiv <{if <[b]> then <[c₁]> else <[c₂]> end}> c₂ := by
+--   intro hb st st'
+--   constructor
+--   . intro h
+--     cases h with
+--     | e_ifTrue => unfold bequiv at hb; simp [*] at *
+--     | e_ifFalse => assumption
+--   . intro h
+--     apply e_ifFalse <;> unfold bequiv at hb
+--     . simp [*]
+--     . assumption
+
 /-
 exercise (3-star)
 We can swap the branches of an `if` if we also negate its condition.
@@ -350,7 +363,21 @@ Prove that `while` loop with guard equivalent to false is equivalent to `skip`.
 
 theorem while_false b c : bequiv b <{false}> →
     cequiv <{while <[b]> do <[c]> end}> <{skip}> := by
-  sorry
+  intro hb st st'
+  constructor
+  . intro h
+    cases h
+    case e_whileFalse => apply e_skip
+    case e_whileTrue =>
+      unfold bequiv at hb
+      simp [*] at *
+  . intro h
+    unfold bequiv at hb
+    simp [*] at *
+    cases h
+    case e_skip =>
+      apply e_whileFalse
+      apply hb
 
 /-
 ## references

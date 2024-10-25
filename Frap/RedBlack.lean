@@ -320,7 +320,14 @@ Prove that `balance` preserves `ForallTree P`.
 theorem balanceP {α : Type u} (P : Nat → α → Prop) c (l : Tree α) k vk (r : Tree α)
     : ForallTree P l → ForallTree P r → P k vk
       → ForallTree P (balance c l k vk r) := by
+  intro hpl hpr hp; simp
   sorry
+  -- split
+  -- . constructor <;> assumption
+  -- . split
+  --   . cases l <;> repeat simp [*] at *
+
+
 
 /-
 exercise (2-star)
@@ -339,6 +346,10 @@ Prove that `ins` maintains `BST`.
 Proceed by induction on `t`.
 -/
 theorem ins_BST {α : Type u} (t : Tree α) k vk : BST t → BST (ins k vk t) := by
+  intro h₁
+  unfold ins
+  split
+  sorry
   sorry
 
 /-

@@ -21,8 +21,15 @@ We'll do induction on the evidence that `loop` terminates, i.e., on a derivation
 
 example st st' : ¬(st =[ <[loop]> ]=> st') := by
   intro contra
+  cases contra
+  . simp at *
+  . rename_i hbf
+    cases hbf
+    . simp at *
+    . rename_i ihc ihloop
+      sorry
+
   -- induction contra
-  sorry
 
 /-
 Here, we see that the `induction` tactic doesn't work (with error "index in target's type is not a variable (consider using the `cases` tactic instead)").

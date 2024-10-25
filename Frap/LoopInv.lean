@@ -364,14 +364,33 @@ What are weakest preconditions of the following commands for the following postc
 -/
 
 theorem is_wp_example
-    : is_wp (fun st => st y ≤ 4) <{x := y + 1}> (fun st => st x ≤ 5) := by
+    : is_wp (fun st => st y ≤ 4)
+              <{x := y + 1}>
+            (fun st => st x ≤ 5) := by
+  unfold is_wp; constructor
+  . apply hoare_consequence_pre
+    . apply hoare_asgn
+    . verify_assertion
+  . intro P' h st hP'
+    unfold valid_hoare_triple at h
+    have hst' : (st[x ↦ st y + 1]) x ≤ 5 := by
+      apply h
+      . assumption
+      . constructor; simp
+    simp at *; assumption
+
+
+theorem is_wp_simple
+  : is_wp (fun st => st y ≤ 9)
+          <{x := y + 1}>
+          (fun st => st x ≤ 10) := by
   unfold is_wp; constructor
   . apply hoare_consequence_pre
     . apply hoare_asgn
     . verify_assertion
   . intro P' h st hP'
     unfold valid_hoare_triple at *
-    have hst' : (st[x ↦ st y + 1]) x ≤ 5 := by
+    have hst' : (st[x ↦ st y + 1]) x ≤ 10 := by
       apply h
       . assumption
       . constructor; simp
@@ -483,6 +502,18 @@ example :
     . apply h_asgn
     . verify_assertion
 
+
+example :
+  Derivable
+    (fun st => (st x + 3) + 2 = 5)
+      <{ x := x + 2; x := x + 3 }>
+    (fun st => st x = 5) := by
+  apply h_seq
+  . apply h_asgn
+  . apply h_consequence_pre
+    . apply h_asgn
+    . verify_assertion
+
 /-
 ## Soundness and completeness
 
@@ -567,7 +598,10 @@ Prove that `wp c₂ Q` suffices as such an assertion.
 theorem wp_seq P Q c₁ c₂
     : Derivable P c₁ (wp c₂ Q) → Derivable (wp c₂ Q) c₂ Q
       → Derivable P (c_seq c₁ c₂) Q := by
-  sorry
+  intro hPre hWP
+  apply h_seq
+  . assumption
+  . apply hPre
 
 /-
 exercise (2-star)
@@ -578,6 +612,7 @@ Prove that for any `Q`, assertion `wp (while b do c end) Q` is a loop invariant 
 
 theorem wp_invariant b c Q : valid_hoare_triple
     (fun st => wp (c_while b c) Q st ∧ beval st b) c (wp (c_while b c) Q) := by
+  apply hoare_sound
   sorry
 
 /-
@@ -586,64 +621,65 @@ For the `while` case, we'll use the invariant suggested by `wp_invariant`.
 -/
 
 theorem hoare_complete P c Q : valid_hoare_triple P c Q → Derivable P c Q := by
-  unfold valid_hoare_triple
-  intro ht
-  induction c generalizing P Q with
-  | c_skip =>
-    apply h_consequence_pre
-    . constructor
-    . intro st hP
-      apply ht
-      . assumption
-      . apply e_skip
-  | c_asgn x a =>
-    apply h_consequence_pre
-    . constructor
-    . intro st hP
-      apply ht
-      . assumption
-      . apply e_asgn; rfl
-  | c_seq c₁ c₂ ih₁ ih₂ =>
-    apply wp_seq
-    . apply ih₁
-      unfold wp
-      intro st st' hP he₁ st'' he₂
-      apply ht <;> try assumption <;> sorry
-      apply e_seq <;> assumption
-    . apply ih₂
-      apply wp_is_precondition
-  | c_if b c₁ c₂ ih₁ ih₂ =>
-    apply h_if
-    . apply ih₁
-      intro st st' hpre he1
-      obtain ⟨⟩ := hpre
-      apply ht
-      . assumption
-      . apply e_ifTrue
-        . assumption
-        . exact he1
-    . apply ih₂
-      intro st st' hpre he2
-      obtain ⟨⟩ := hpre
-      apply ht
-      . assumption
-      . apply e_ifFalse
-        . simp [*] at *
-        . exact he2
-  | c_while b c ih =>
-    apply h_consequence P Q _ (fun st => wp (c_while b c) Q st ∧ ¬(beval st b))
-    . apply h_while
-      apply ih
-      apply wp_invariant
-    . intro st hP st'
-      apply ht
-      exact hP
-    . intro st; simp
-      intro hinvpost hbfalse
-      apply wp_is_precondition
-      . exact hinvpost
-      . apply e_whileFalse
-        exact hbfalse
+  -- unfold valid_hoare_triple
+  -- intro ht
+  sorry
+  -- induction c generalizing P Q with
+  -- | c_skip =>
+  --   apply h_consequence_pre
+  --   . constructor
+  --   . intro st hP
+  --     apply ht
+  --     . assumption
+  --     . apply e_skip
+  -- | c_asgn x a =>
+  --   apply h_consequence_pre
+  --   . constructor
+  --   . intro st hP
+  --     apply ht
+  --     . assumption
+  --     . apply e_asgn; rfl
+  -- | c_seq c₁ c₂ ih₁ ih₂ =>
+  --   apply wp_seq
+  --   . apply ih₁
+  --     unfold wp
+  --     intro st st' hP he₁ st'' he₂
+  --     apply ht <;> try assumption <;> sorry
+  --     apply e_seq <;> assumption
+  --   . apply ih₂
+  --     apply wp_is_precondition
+  -- | c_if b c₁ c₂ ih₁ ih₂ =>
+  --   apply h_if
+  --   . apply ih₁
+  --     intro st st' hpre he1
+  --     obtain ⟨⟩ := hpre
+  --     apply ht
+  --     . assumption
+  --     . apply e_ifTrue
+  --       . assumption
+  --       . exact he1
+  --   . apply ih₂
+  --     intro st st' hpre he2
+  --     obtain ⟨⟩ := hpre
+  --     apply ht
+  --     . assumption
+  --     . apply e_ifFalse
+  --       . simp [*] at *
+  --       . exact he2
+  -- | c_while b c ih =>
+  --   apply h_consequence P Q _ (fun st => wp (c_while b c) Q st ∧ ¬(beval st b))
+  --   . apply h_while
+  --     apply ih
+  --     apply wp_invariant
+  --   . intro st hP st'
+  --     apply ht
+  --     exact hP
+  --   . intro st; simp
+  --     intro hinvpost hbfalse
+  --     apply wp_is_precondition
+  --     . exact hinvpost
+  --     . apply e_whileFalse
+  --       exact hbfalse
 
 /-
 ## Decidability

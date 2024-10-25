@@ -54,6 +54,10 @@ It will attempt to conclude that both sides of an equality goal is indeed equal,
 example : 2 + 5 = 7 := by
   rfl
 
+example : ¬ Even = 3 := by
+  intro h
+  sorry
+
 /-
 ## Inductive types
 

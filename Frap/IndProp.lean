@@ -184,19 +184,35 @@ example : ¬ Even 1 := by
 exercise (1-star)
 -/
 example : ¬ Even 3 := by
-  sorry
+  intro h
+  cases h
+  rename_i h
+  simp [Nat.add] at h
+  cases h
 
 /-
 exercise (1-star)
 -/
 theorem evSSSS_ev (n : Nat) : Even (succ (succ (succ (succ n)))) → Even n := by
-  sorry
+  intro h
+  cases h
+  rename_i h₂
+  cases h₂
+  assumption
 
 /-
 exercise (1-star)
 -/
 theorem ev5_nonsense : Even 5 → 2 + 2 = 9 := by
-  sorry
+  intro h
+  simp [Nat.add]
+  cases h
+  rename_i h
+  simp [Nat.add] at h
+  cases h
+  rename_i h₂
+  simp [Nat.add] at h₂
+  cases h₂
 
 /-
 ## Induction on evidence

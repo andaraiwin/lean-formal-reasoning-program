@@ -101,7 +101,22 @@ def stuck (t: Tm) : Prop :=
 exercise (2-star)
 -/
 example : ∃ t, stuck t := by
-  sorry
+  unfold stuck step_normal_form normal_form
+  exists (iszero tru)
+  apply And.intro
+  . intro contra
+    cases contra
+    rename_i h
+    cases h
+    rename_i h₂
+    cases h₂
+  . intro contra
+    cases contra
+    rename_i h
+    cases h
+    rename_i h₂
+    cases h₂
+
 
 /-
 However, although values and normal forms are _not_ the same in this language, the set of values is a subset of the set of normal forms.

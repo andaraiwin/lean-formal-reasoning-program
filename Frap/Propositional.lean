@@ -68,7 +68,27 @@ exercise (2-star)
 Prove that the conjunction operator is associative.
 -/
 theorem and_associative (p q r : Prop) : (p ∧ q) ∧ r ↔ p ∧ (q ∧ r) := by
-  sorry
+  constructor
+  . intro h
+    cases h with
+    | intro hpq hr =>
+      cases hpq with
+      | intro hp hq =>
+        apply And.intro
+        . exact hp
+        . apply And.intro
+          . exact hq
+          . exact hr
+  . intro h
+    cases h with
+    | intro hp hqr =>
+      cases hqr with
+      | intro hq hr =>
+        apply And.intro
+        . apply And.intro
+          . exact hp
+          . exact hq
+        . exact hr
 
 /-
 ## Rewriting proof terms using previously proven results

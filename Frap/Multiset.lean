@@ -63,6 +63,7 @@ We begin the proof below by using Lean's tactic `funext`, which applies that axi
 theorem union_assoc a b c : union a (union b c) = union (union a b) c := by
   funext x
   simp [*] at *
+
   sorry
 
 /-

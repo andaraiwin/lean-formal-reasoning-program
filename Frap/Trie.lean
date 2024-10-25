@@ -257,14 +257,19 @@ This will work, but it means we've moved the work into directly proving some thi
 exercise (1-star)
 -/
 theorem look_leaf α (d : α) j : look d j leaf = d := by
-  sorry
+  unfold look
+  rfl
 
 /-
 exercise (2-star)
 This is a rather simple induction.
 -/
 theorem look_ins_same {α} d k (v : α) t : look d k (ins d k v t) = v := by
-  sorry
+  unfold look ins
+  split
+  . sorry
+  .
+    sorry
 
 /-
 exercise (3-star)
