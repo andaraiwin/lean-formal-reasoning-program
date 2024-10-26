@@ -157,9 +157,9 @@ Fill in decorations and prove the decorated program correct.
 
 ```
   { x = m } ->>
-  { y + x = m }
+  { 0 + x = m }
     y := 0;
-                      { 0 + x = m }
+                      { x = m ∧ y = 0}
     while x != 0 do
                       { y + x = m ∧ (x != 0) } ->>
                       { (y + 1) + (x - 1) = m }
@@ -168,7 +168,7 @@ Fill in decorations and prove the decorated program correct.
       y := y + 1
                       { y + x = m }
     end
-  { y = x + m ∧ ¬(x != 0) } ->>
+  { y + x = m ∧ ¬(x != 0) } ->>
   { y = m }
 ```
 -/
@@ -176,12 +176,12 @@ Fill in decorations and prove the decorated program correct.
 
 def slow_assignment_dec (m : Nat) : Decorated := decorated
   (fun st => st x = m) $
-    dc_pre (fun st => st y + st x = m) $
+    dc_pre (fun st => 0 + st x = m) $
     dc_seq
     (dc_asgn y <{0}>
-        (fun st => 0 + st x = m)) $
+        (fun st => st x = m ∧ st y = 0)) $
     dc_post (dc_while <{x != 0}>
-        (fun st => st y + st x = m ∧ st x ≠ 0)
+        (fun st => st y + st x = m ∧ (st x ≠ 0))
         (dc_pre (fun st => (st y + 1) + (st x - 1) = m) $
         dc_seq
         (dc_asgn x <{x - 1}>
@@ -196,9 +196,6 @@ theorem slow_assignment m
     : outer_triple_valid (slow_assignment_dec m) := by
   unfold slow_assignment_dec
   verify
-  . sorry
-  . sorry
-  . sorry
 
 /-
 ### Example: parity
@@ -350,17 +347,17 @@ def is_wp P c Q := ({* P *} c {* Q *}) ∧ ∀P', ({* P' *} c {* Q *}) → (P' -
 exercise (1-star)
 What are weakest preconditions of the following commands for the following postconditions?
 
-`{ ? } skip { x = 5 }`
+`{ ? (x = 5) } skip { x = 5 }`
 
-`{ ? } x := y + z { x = 5 }`
+`{ ? (y + z = 5) } x := y + z { x = 5 }`
 
-`{ ? } x := y { x = y }`
+`{ ? (True OR y = y) } x := y { x = y }`
 
-`{ ? } if x = 0 then y := z + 1 else y := w + 2 end { y = 5 }`
+`{ ? (x = 0 ∧ z = 4 OR x ≠ 0 ∧ w = 3) } if x = 0 then y := z + 1 else y := w + 2 end { y = 5 }`
 
-`{ ? } x := 5 { x = 0 }`
+`{ ? (False) } x := 5 { x = 0 }`
 
-`{ ? } while true do x := 0 end { x = 0 }`
+`{ ? (True) } while true do x := 0 end { x = 0 }`
 -/
 
 theorem is_wp_example
