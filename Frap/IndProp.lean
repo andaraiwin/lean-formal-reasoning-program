@@ -190,6 +190,8 @@ example : ¬ Even 3 := by
   simp [Nat.add] at h
   cases h
 
+#check Nat.add
+
 /-
 exercise (1-star)
 -/
@@ -292,6 +294,8 @@ theorem ev_sum (n m : Nat) : Even n → Even m → Even (n + m) := by
       rw [← Nat.add_assoc]
       apply ev_add_two
       exact ih
+
+#check Nat.add_assoc
 
 /-
 ## Inductive relations
