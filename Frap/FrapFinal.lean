@@ -5,9 +5,10 @@ You may import additional lecture and exercise files here as necessary.
 import Frap.Hoare2
 import Frap.Imp
 import Frap.Equiv
-import Aesop
+import Frap.SmallStep
 import Mathlib.Tactic.Ring
-import Mathlib.Tactic.Linarith
+-- import Aesop
+-- import Mathlib.Tactic.Linarith
 -- import Mathlib.Algebra.Ring.Basic
 -- import Mathlib.Data.Real.Basic
 -- import Mathlib.Algebra.GroupPower.Basic
@@ -15,8 +16,8 @@ import Mathlib.Tactic.Linarith
 /- [add more here] -/
 
 
-example : α → α := by
-  aesop
+-- example : α → α := by
+--   aesop
 
 -- example (x y : ℝ) : x^3-y^3=(x-y)*(x^2+x*y+y^2) := by
 --   ring
@@ -59,9 +60,9 @@ If you are not sure whether a certain resource may be used, ask on Ed as a priva
 ### Declaration of external resource use
 
 [**
-  Tactics in Lean4, https://github.com/madvorak/lean4-tactics, accessed at 2024-10-25, 4:24 AMm
-  Propositions and Proofs, https://lean-lang.org/theorem_proving_in_lean4/propositions_and_proofs.html, accessed at 2024-10-25, 11:27 PM
-
+  Tactics in Lean4, https://github.com/madvorak/lean4-tactics, accessed at 2024-10-24, 4:24 AM
+  Propositions and Proofs, https://lean-lang.org/theorem_proving_in_lean4/propositions_and_proofs.html, accessed at 2024-10-24, 11:27 PM
+  Mathlib tactics, https://leanprover-community.github.io/mathlib_docs/tactics.html, accessed at 2024-10-26, 12:00 AM
 **]
 -/
 
@@ -241,7 +242,7 @@ namespace Imp
 
 open CEval
 attribute [local simp]
-  aeval cequiv update x y lookup_update_neq lookup_update_eq
+  aeval cequiv update empty lookup_update_neq lookup_update_eq
 
 /-
 (a) Prove the following properties about state updates.
@@ -251,21 +252,39 @@ theorem update_overwrite x e₁ e₂ st
     : (x !-> e₂; x !-> e₁; st) = (x !-> e₂; st) := by
   unfold update
   funext x'
-  sorry
+  by_cases h : x' = x
+  case pos => subst h; simp [update]
+  case neg => simp [update, h]
 
 theorem update_swap x y e₁ e₂ st : x ≠ y
     → (y !-> e₂; x !-> e₁; st) = (x !-> e₁; y !-> e₂; st) := by
   intro hxy
   unfold update
   funext z
-  by_cases hx : z = x
-  case pos =>
-    sorry
-  case neg => sorry
+  by_cases hzx : z = x
+  case pos => subst hzx; simp [update, *]
+  case neg =>
+    by_cases hzy : z = y
+    case pos => subst hzy; simp [update, *]
+    case neg => simp [update, *]
 
 /-
 (b) Show that these two programs are not equivalent.
 -/
+
+-- theorem ceval_deterministic' c₁ c₂ st st₁ st₂ :
+--   (st =[ <[c₁]> ]=> st₁) → (st =[ <[c₂]> ]=> st₂) → st₁ ≠ st₂ := by
+--   intro hc₁ hc₂
+--   induction hc₁ generalizing c₂ st₂ with
+--   | e_asgn _ _ _ _ => -- Assignment
+--     cases hc₂
+--     case e_asgn => -- Assignment
+--       simp [update] at hc₁ hc₂
+--       intro contra
+--       apply hc₁.h _ contra
+--   sorry
+
+#check ceval_deterministic
 
 example : ¬ cequiv
     <{
@@ -278,10 +297,28 @@ example : ¬ cequiv
     }>
     := by
   /- hint: use determinism of evaluation -/
+  unfold cequiv
 
+  let st := update (update empty x 1) y 2
+  simp [CEval, update] at *
+  exists st
+  let st' := update (update empty x 3) y 5
+  exists st'
+  intro contra
+  cases contra
+  rename_i hc₁ hc₂
 
-  sorry
+  have hNeq : ¬st = st' := by
+    sorry
 
+  apply hNeq
+  apply ceval_deterministic
+  . -- apply Com something that has to be useful
+    constructor
+  .
+    sorry
+
+#check ceval_deterministic
 
 /-
 (c) Let `x₁`, `x₂` be program variables, and `e₁`, `e₂` be expressions.
@@ -299,7 +336,16 @@ Your condition should be as weak as possible, i.e., covers as many cases as poss
   ```
 
 Answer:
-[**fill in here**]
+[**
+Using Separation Logic:
+
+    The condition when these two programs are equivalent is when the variables x₁ and x₂ are not in the expression e₁ and e₂
+    or using the same heap memory.
+    Thus, the weakest preconditions of the two programs are disjoint like this { (e₁ ↦ -) -* (e₂ ↦ -) }, where e₁ and e₂ are the expressions
+    that do not abort while the programs is running.
+
+    For the postcondtions, {x₁ ↦ e₁ ∧ x₂ ↦ e₂ * eγ ∧ e₁ ↦ - * e₂ ↦ -} where eγ is the heap memory outer the e₁ and e₂
+**]
 -/
 
 /-
@@ -322,7 +368,11 @@ Consider the following program:
 (a) Explain what this program does without going into the details of the program.
 
 Answer:
-[**The program will gradually increase the value `z` using the value from `x` while reducing the value of `x` to zero if not already zero at first**]
+[**
+  The program will count the total number of iterations
+  used in the inner while loop and outer while loop and
+  store the result in the variable z.
+**]
 -/
 
 /-
@@ -331,32 +381,35 @@ Answer:
 
 ```
   { True } ->>
-  { **FILL IN HERE** }
+  { 0 + n * (n + 1) / 2 = n * (n + 1) / 2 }
     z := 0;
-                    { **FILL IN HERE** }
+                    { z + n * (n + 1) / 2 = n * (n + 1) / 2 }
     x := n;
-                    { **FILL IN HERE** }
+                    { z + x * (x + 1) / 2 = n * (n + 1) / 2 }
     while x != 0 do
-                    { **FILL IN HERE** } ->>
-                    { **FILL IN HERE** }
+                    { z + x * (x + 1) / 2 = n * (n + 1) / 2 ∧ (x ≠ 0) } ->>
+                    { z + x * (x + 1) / 2 = n * (n + 1) / 2 / 2 }
       y := x;
-                    { **FILL IN HERE** }
+                    { z + x * (x + 1) / 2 = n * (n + 1) / 2 ∧ y = x}
+
       while y != 0 do
-                    { **FILL IN HERE** } ->>
-                    { **FILL IN HERE** }
+                    { z + x * (x + 1) / 2 = n * (n + 1) / 2 ∧ (x ≠ 0) ∧ (y ≠ 0) } ->>
+                    { z + (x - 1) * x / 2 + (x - y) = (n * (n + 1) / 2)}
         z := z + 1;
-                    { **FILL IN HERE** }
+                    { z + (x - 1) * x / 2) + (x - (y - 1) - 2) = (n * (n + 1) / 2)}
         y := y - 1
-                    { **FILL IN HERE** }
+                    { z + (x - 1) * x / 2 + (x - y - 2) = (n * (n + 1) / 2)}
       end
-                    { **FILL IN HERE** } ->>
-                    { **FILL IN HERE** }
+                    { z + (x - 1) * x / 2 + x = (n * (n + 1) / 2) ∧ ¬(y ≠ 0) } ->>
+                    { z + (x - 1) * x / 2 = n * (n + 1) / 2 }
+
       x := x - 1
-                    { **FILL IN HERE** }
+                    { z + x * (x + 1) / 2 = n * (n + 1) / 2 }
     end
-  { **FILL IN HERE** } ->>
-  { **FILL IN HERE** }
+  { z = n * (n + 1) / 2 - x * (x + 1) / 2 ∧ ¬(x ≠ 0) } ->>
+  { z = n * (n + 1) / 2 }
 ```
+
 -/
 
 /-
@@ -374,30 +427,35 @@ attribute [local simp] beval z n
 open DCom
 open Decorated
 
-def prog : Decorated := decorated
-  (fun st => True) $
-    dc_pre (fun st => /-**FILL IN HERE**-/ True) $
+def prog (n : Nat) : Decorated := decorated
+  (fun st => st x = n) $
+    dc_pre (fun _ => 0 + n * (n + 1) / 2 = n * (n + 1) / 2) $
     dc_seq (dc_asgn z <{0}>
-      (fun st => /-**FILL IN HERE**-/ True)) $
+      (fun st => st z + n * (n + 1) / 2 = n * (n + 1) / 2)) $
     dc_seq (dc_asgn x <{n}>
-      (fun st => /-**FILL IN HERE**-/ True)) $
+      (fun st => st z + st x * (st x + 1) / 2 = n * (n + 1) / 2)) $
+
     dc_post (dc_while <{x != 0}>
-        (fun st => /-**FILL IN HERE**-/ True) (
-      dc_pre (fun st => /-**FILL IN HERE**-/ True) $
+        (fun st => st z + (st x - 1) * st x / 2 + st x = n * (n + 1) / 2 ∧ (st x ≠ 0)) (
+      dc_pre (fun st => st z + (st x - 1) * st x / 2 + st x = n * (n + 1) / 2) $ -- watch out
       dc_seq (dc_asgn y <{x}>
-        (fun st => /-**FILL IN HERE**-/ True)) $
-      dc_seq (dc_while <{y != 0}>
-          (fun st => /-**FILL IN HERE**-/ True) (
-        dc_pre (fun st => /-**FILL IN HERE**-/ True) $
+        (fun st => st z + (st x - 1) * st x / 2 + st x = n * (n + 1) / 2 ∧ st y = st x)) $ -- watch out
+
+      dc_seq (dc_while <{y != 0}> -- watch out inner loop
+          (fun st => st z + st x * (st x + 1) / 2 = n * (n + 1) / 2 ∧ (st x ≠ 0) ∧ (st y ≠ 0)) ( -- precon inner loop
+        dc_pre (fun st => st z + (st x - 1) * st x / 2 + (st x - st y) = n * (n + 1) / 2) $
         dc_seq (dc_asgn z <{z + 1}>
-          (fun st => /-**FILL IN HERE**-/ True)) $
+          (fun st => st z + (st x - 1) * st x / 2 + (st x - (st y - 1) - 2) = n * (n + 1) / 2)) $
         dc_asgn y <{y - 1}>
-          (fun st => /-**FILL IN HERE**-/ True)
-      ) (fun st => /-**FILL IN HERE**-/ True)) $
+          (fun st => st z + (st x - 1) * st x / 2 + (st x - st y - 2) = n * (n + 1) / 2)
+      ) (fun st => st z + (st x - 1) * st x / 2 + st x = (n * (n + 1) / 2) ∧ ¬(st y ≠ 0))) $ -- postcon inner loop
+
       dc_asgn x <{x - 1}>
-        (fun st => /-**FILL IN HERE**-/ True)
-    ) (fun st => /-**FILL IN HERE**-/ True))
-  (fun st => /-**FILL IN HERE**-/ True)
+        (fun st => st z + st x * (st x + 1) / 2 = n * (n + 1) / 2)
+
+    ) (fun st => st z + st x * (st x + 1) / 2 = n * (n + 1) / 2 ∧ ¬(st x ≠ 0)))
+  (fun st => st z = n * (n + 1) / 2)
+
 
 attribute [local simp]
   prog
@@ -407,53 +465,116 @@ You may use the following axioms within your proof.
 If your proof requires other facts of similar nature, feel free to include them, but indicate clearly.
 -/
 
-axiom add_cumul n : n ≠ 0 → n * (n + 1) / 2 = (n - 1) * n / 2 + n
+axiom add_cumul n : n ≠ 0 → n * (n + 1) / 2 = (n - 1) * n / 2 + n -- slight adjustment on the original axiom
 axiom neg_dist e n : n ≠ 0 → e - n + 1 = e - (n - 1)
 axiom dec_inc n : n ≠ 0 → n - 1 + 1 = n
+axiom sub_add_eq_sub_sub (a b c : Nat) : a - b + c = a - (b - c)
+
+attribute [local simp]
+  sub_add_eq_sub_sub add_cumul neg_dist dec_inc lookup_update_eq lookup_update_neq
 
 /- [fill in additional axioms here as needed] -/
 
-theorem prog_correct : outer_triple_valid prog := by
-  verify
+theorem prog_correct' n : outer_triple_valid (prog n) := by
+  unfold prog
+  verify <;> rename_i st h
+  . ring_nf
+    unfold x
+    simp -- complete
+    sorry
+  . unfold x
+    ring_nf
+    sorry
+  . obtain ⟨h₁, h₂⟩ := h
+    rw [←h₁]
+    unfold x
+    simp
+    ring_nf
+    sorry
+  .
+    sorry
+  . obtain ⟨h₁, h₂⟩ := h
+    sorry
+  . obtain ⟨h₁, h₂⟩ := h
+    rw [←h₁]
+    unfold x y
+    ring_nf
+    sorry
+  . obtain ⟨h₁, h₂⟩ := h
+    unfold x at *
+    sorry
+  . obtain ⟨h₁, h₂⟩ := h
+    rw [←h₁]
+    unfold x y
+    simp [*] at *
+
+    sorry
+  . obtain ⟨h₁, h₂⟩ := h
+    obtain ⟨h₂', h₂''⟩ := h₂
+    rw [←h₁]
+    unfold x y
+    ring_nf
+    sorry
+  . unfold x y
+    simp
+    sorry
+  . unfold x y
+    simp
+    rw [←h]
+  . unfold x
+    simp
+    obtain ⟨h₁, h₂⟩ := h
+    rw [←h₁]
+    unfold x
+    sorry
+  . obtain ⟨h₁, h₂⟩ := h
+    rw [←h₁]
+    simp
+    ring_nf
+    sorry
 
 /-
 (d) [Extra credits]
 Prove the aforementioned axioms.
 -/
 
-theorem add_cumul' n : n ≠ 0 → n * (n + 1) / 2 = (n - 1) * n / 2 + n := by
+theorem add_cumul' n : n ≠ 0 → n * (n + 1) / 2 = n * (n - 1) / 2 + n := by
   intro h
   induction n with
   | zero => contradiction -- n ≠ 0
   | succ n' ih =>
     induction n' with
-    | zero => aesop -- base case n = 1
-    | succ n'' ih' => -- inductive case
+    | zero => simp -- base case n = 1
+    | succ n'' ih' =>
+      -- simp [*] at *
+      simp
+      apply Eq.symm
+      ring_nf at *
+      rw [ih]
       ring_nf
-      simp [*] at *
+      rw [add_assoc]
+      simp
+      . sorry
+      . sorry
 
-      -- -- rw [<-ih]
-      -- ring_nf
-      -- have heq : 3 + n'' * 2 + (n'' + n'' ^ 2) / 2 = (6 + n'' * 5 + n'' ^ 2) / 2 := by
-      --   ring_nf
-      --   sorry
-      -- rw [heq]
-      sorry
 
 theorem neg_dist' e n : n ≠ 0 -> e - n + 1 = e - (n - 1) := by
   intro h
-  induction n with
+  induction n generalizing e with
   | zero => contradiction
   | succ n' ih =>
-    simp [ih]
-    sorry
+    simp
 
+-- #check sub_add
+-- #check sub_add_eq_sub_sub
+#check Nat.sub_add_comm
 #check Nat
 
 theorem dec_inc' n : n ≠ 0 → n - 1 + 1 = n := by
-  intro h_neg0
-
-  sorry
+  induction n with
+  | zero => simp
+  | succ n' ih =>
+    simp [ih]
 
 end Hoare
 end Imp

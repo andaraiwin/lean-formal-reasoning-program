@@ -80,3 +80,68 @@ verify
 
 end Hoare
 end Imp
+
+
+/--
+```
+  { True } ->>
+  { 0 = n * (n + 1) / 2 - n * (n + 1) / 2 }
+    z := 0;
+                    { z = n * (n + 1) / 2 - n * (n + 1) / 2 }
+    x := n;
+                    { z = n * (n + 1) / 2 - x * (x + 1) / 2 }
+    while x != 0 do
+                    { z = n * (n + 1) / 2 - x * (x + 1) / 2 ∧ (x ≠ 0) } ->>
+                    { z = n * (n + 1) / 2 - x * (x + 1) / 2 }
+      y := x;
+                    { z = n * (n + 1) / 2 - x * (x + 1) / 2 ∧ y = x}
+
+      while y != 0 do
+                    { z = n * (n + 1) / 2 - x * (x + 1) / 2 ∧ y = x ∧ (x ≠ 0) ∧ (y ≠ 0) } ->>
+                    { z = (n * (n + 1) / 2) - ((x + 1) * x / 2) + (x - y) }
+        z := z + 1;
+                    { z = (n * (n + 1) / 2) - ((x - 1) * x / 2) + (x - y) + 1 }
+        y := y - 1
+                    { z = (n * (n + 1) / 2) - ((x - 1) * x / 2) + (x - ( y - 1))}
+      end
+                    { z = (n * (n + 1) / 2) - ((x - 1) * x / 2) + x ∧ ¬(y ≠ 0) } ->>
+                    { z = n * (n + 1) / 2 - (x - 1) * x / 2 }
+
+      x := x - 1
+                    { z = n * (n + 1) / 2 - x * (x + 1) / 2 }
+    end
+  { z = n * (n + 1) / 2 - x * (x + 1) / 2 ∧ ¬(x ≠ 0) } ->>
+  { z = n * (n + 1) / 2 }
+```
+
+def prog (n : Nat) : Decorated := decorated
+  (fun _ => True) $
+    dc_pre (fun _ => 0 = n * (n + 1) / 2 - n * (n + 1) / 2) $
+    dc_seq (dc_asgn z <{0}>
+      (fun st => st z = n * (n + 1) / 2 - n * (n + 1) / 2)) $
+    dc_seq (dc_asgn x <{n}>
+      (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2)) $
+
+    dc_post (dc_while <{x != 0}>
+        (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2 ∧ (st x ≠ 0)) (
+
+      dc_pre (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2) $ -- watch out
+      dc_seq (dc_asgn y <{x}>
+        (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2 ∧ st y = st x)) $ -- watch out
+
+      dc_seq (dc_while <{y != 0}> -- watch out inner loop
+          (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2 ∧ (st x ≠ 0) ∧ (st y ≠ 0)) ( -- precon inner loop
+        dc_pre (fun st => st z = (n * (n + 1) / 2) - ((st x + 1) * st x / 2) + (st x - st y)) $
+        dc_seq (dc_asgn z <{z + 1}>
+          (fun st => st z = (n * (n + 1) / 2) - ((st x - 1) * st x / 2) + (st x - st y) + 1)) $
+        dc_asgn y <{y - 1}>
+          (fun st => st z = (n * (n + 1) / 2) - ((st x - 1) * st x / 2) + (st x - (st y - 1)))
+      ) (fun st => st z = n * (n + 1) / 2 - (st x - 1) * st x / 2 ∧ ¬(st y ≠ 0))) $ -- postcon inner loop
+
+      dc_asgn x <{x - 1}>
+        (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2)
+
+    ) (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2 ∧ ¬(st x ≠ 0)))
+  (fun st => st z = n * (n + 1) / 2)
+
+--/

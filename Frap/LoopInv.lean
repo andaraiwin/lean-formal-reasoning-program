@@ -295,9 +295,9 @@ If we look at how `z` progresses in the loop, `z = m` after the 1st iteration, `
 Since `y` tracks how many times we go through the loop, this leads us to derive a loop invariant candidate: `z = y * m ∧ x = m`, which makes the proof go through.
 ```
   { x = m } ->>
-  { 0 = 0 * m ∧ x = m }
+  { 0 = 0 * m ∧ x = m } OR {z = 0 ∧ y = 0 ∧ x = m}
     y := 0;
-                      { 0 = y * m ∧ x = m }
+                      { 0 = y * m ∧ x = m } OR {z = 0 ∧ y = 0 ∧ x = m}
     z := 0;
                       { z = y * m ∧ x = m }
     while y != x do
@@ -312,6 +312,37 @@ Since `y` tracks how many times we go through the loop, this leads us to derive 
   { z = m * m }
 ```
 -/
+
+def squaring_dec (m : Nat) : Decorated := decorated
+  (fun st => st x = m) $
+    dc_pre (fun st => 0 = 0 * m ∧ st x = m) $
+
+    dc_seq
+    (dc_asgn y <{0}>
+        (fun st => 0 = st y * m ∧ st x = m)) $
+    dc_seq
+    (dc_asgn z <{0}>
+        (fun st => st z = st y * m ∧ st x = m)) $
+
+    dc_post (dc_while <{y != x}>
+        (fun st => st z = st y * m ∧ st x = m ∧ (st y ≠ st x))
+        (dc_pre (fun st => st z + st x = (st y + 1) * m ∧ st x = m) $
+        dc_seq
+        (dc_asgn z <{z + x}>
+          (fun st => st z = (st y + 1) * m ∧ st x = m))
+        (dc_asgn y <{y + 1}>
+          (fun st => st z = st y * m ∧ st x = m))
+    )
+  (fun st => st z = st y * m ∧ st x = m ∧ ¬(st y ≠ st x)))
+  (fun st => st z = m * m)
+
+theorem squaring m
+    : outer_triple_valid (squaring_dec m) := by
+  unfold squaring_dec
+  verify
+  . sorry
+
+#eval 5*5
 
 /-
 ## Weakest preconditions
