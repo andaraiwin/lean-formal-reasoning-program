@@ -82,7 +82,7 @@ end Hoare
 end Imp
 
 
-/--
+/-
 ```
   { True } ->>
   { 0 = n * (n + 1) / 2 - n * (n + 1) / 2 }
@@ -144,4 +144,4 @@ def prog (n : Nat) : Decorated := decorated
     ) (fun st => st z = n * (n + 1) / 2 - st x * (st x + 1) / 2 ∧ ¬(st x ≠ 0)))
   (fun st => st z = n * (n + 1) / 2)
 
---/
+-/
